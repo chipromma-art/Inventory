@@ -216,10 +216,6 @@
               <div class="col-md-4"><label class="form-label">Lot เครื่องเก่า</label><input type="text"
                   class="form-control" id="swOldLot" list="lotSuggestions" placeholder="เว้นว่าง = ดึงอัตโนมัติ"
                   autocomplete="off"></div>
-              <div class="mb-3">
-                <label for="swImage" class="form-label">แนบรูปภาพ (ถ้ามี)</label>
-                <input type="file" id="swImage" class="form-control" accept="image/*">
-              </div>
               <div class="col-12"><label class="form-label">หมายเหตุ</label><textarea class="form-control" id="swNote"
                   rows="2"></textarea></div>
               <div class="col-12"><button class="btn btn-primary" type="submit" id="swapBtn"><i
@@ -310,7 +306,6 @@
                     <th>Lot</th>
                     <th>SN เก่า</th>
                     <th>หมายเหตุ</th>
-                    <th class="text-center">รูปภาพ</th>
                   </tr>
                 </thead>
                 <tbody id="historyBody"></tbody>
@@ -342,9 +337,14 @@
               <option value="ใหม่">ใหม่</option>
               <option value="เก่า">เก่า</option>
             </select></div>
-          <div class="mb-1"><label class="form-label">Lot อุปกรณ์</label><input type="text" class="form-control"
+          <div class="mb-3"><label class="form-label">Lot อุปกรณ์</label><input type="text" class="form-control"
               id="lot" list="lotSuggestions" placeholder="เช่น lot1, lot2, lot3" autocomplete="off"><datalist
               id="lotSuggestions"></datalist></div>
+          <!-- เพิ่มช่องสำหรับอัปโหลดรูปภาพอุปกรณ์ -->
+          <div class="mb-1"><label class="form-label">รูปภาพอุปกรณ์</label><input type="file" class="form-control"
+              id="equipmentImage" accept="image/*">
+            <div class="form-text">รองรับไฟล์ภาพ (ถ้ามี)</div>
+          </div>
         </div>
         <div class="modal-footer"><button type="button" class="btn btn-light"
             data-bs-dismiss="modal">ยกเลิก</button><button type="submit" class="btn btn-primary"
@@ -372,12 +372,6 @@
           <div class="mb-1"><label class="form-label">Lot อุปกรณ์</label><input type="text" class="form-control"
               id="insLot" list="lotSuggestions" placeholder="เช่น lot1, lot2, lot3" autocomplete="off"></div>
         </div>
-        <div class="mb-3 px-3" style="margin-top: 20px;">
-          <div style="margin-bottom: 8px; font-weight: 500; color: #212529; font-size: 14px;">
-            รูปภาพการติดตั้ง <span style="font-weight: normal; color: #6c757d;">(ถ้าต้องการเพิ่ม/เปลี่ยน)</span>
-          </div>
-          <input type="file" id="insImage" class="form-control">
-        </div>
         <div class="modal-footer"><button type="button" class="btn btn-light"
             data-bs-dismiss="modal">ยกเลิก</button><button type="submit" class="btn btn-primary"
             id="installedSaveBtn">บันทึก</button></div>
@@ -390,7 +384,7 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     /* ================= ตั้งค่า API เชื่อมต่อ Google Sheets ================= */
-    const API_URL = "https://script.google.com/macros/s/AKfycbx_EBQBjtMmBOoMxh-HRU9cLA0_CC_L6wi8N6RYIuWWifDkLQAjP5SBJWlsCQWjb-EC/exec"; // 👈 เอา URL ที่ได้จาก Google Apps Script มาใส่ตรงนี้
+    const API_URL = "https://script.google.com/macros/s/AKfycbx_EBQBjtMmBOoMxh-HRU9cLA0_CC_L6wi8N6RYIuWWifDkLQAjP5SBJWlsCQWjb-EC/exec";
 
     async function callAPI(action, data = {}) {
       try {
@@ -494,74 +488,6 @@
     }
     function filterByLot(lot) { setLotFilter(lot); new bootstrap.Tab(document.querySelector('[data-bs-target="#tabStock"]')).show(); }
 
-    /* ================= ประวัติ & Export ================= */
-    async function searchHistoryByDate(e) {
-      e.preventDefault();
-      const start = document.getElementById('histStart').value;
-      const end = document.getElementById('histEnd').value;
-      if (start > end) { showToast('วันที่เริ่มต้น ต้องไม่เกินวันที่สิ้นสุด', false); return; }
-
-      try {
-        busy('btnSearchHistory', true, 'ค้นหา');
-        const res = await callAPI('getHistoryByDateRange', { startDate: start, endDate: end });
-        currentHistory = res || [];
-        renderHistory(currentHistory);
-        showToast('ดึงข้อมูลประวัติเรียบร้อย พบ ' + currentHistory.length + ' รายการ', true);
-      } catch (err) {
-        showToast('ดึงประวัติไม่สำเร็จ: ' + err.message, false);
-      } finally {
-        busy('btnSearchHistory', false, '<i class="bi bi-search"></i> ค้นหา');
-      }
-    }
-
-    function renderHistory(rows) {
-      const body = document.getElementById('historyBody');
-      if (!rows.length) { body.innerHTML = '<tr><td colspan="7" class="empty text-center text-muted">ไม่พบประวัติในช่วงเวลานี้</td></tr>'; return; }
-      body.innerHTML = rows.map(h => {
-        // ตัดเวลาออกให้เหลือแค่วันที่
-        let dateOnly = h.date ? h.date.split(' ')[0] : '-';
-        // สร้างปุ่มดูรูป
-        let imgTag = h.imageUrl ? `<a href="${h.imageUrl}" target="_blank" class="text-primary text-decoration-none small fw-bold"><i class="bi bi-image"></i> ดูรูป</a>` : '<span class="text-muted small">-</span>';
-
-        return `<tr>
-      <td class="small text-nowrap">${escapeHtml(dateOnly)}</td>
-      <td>${escapeHtml(h.location)}</td>
-      <td class="text-success fw-semibold">${escapeHtml(h.newSN)}</td>
-      <td><span class="badge bg-secondary-subtle text-secondary-emphasis">${escapeHtml(h.newLot || '-')}</span></td>
-      <td class="text-muted">${escapeHtml(h.oldSN)}</td>
-      <td class="small">${escapeHtml(h.note || '-')}</td>
-      <td class="text-center">${imgTag}</td>
-    </tr>`
-      }).join('');
-    }
-
-    function exportHistoryExcel() {
-      if (!currentHistory || currentHistory.length === 0) { showToast('ไม่มีข้อมูลสำหรับ Export', false); return; }
-      let csvContent = '\uFEFF';
-      csvContent += "วันที่,สถานที่,SN ใหม่,Lot,SN เก่า,หมายเหตุ,ลิงก์รูปภาพ\n";
-      currentHistory.forEach(h => {
-        let dateOnly = h.date ? h.date.split(' ')[0] : '';
-        let row = [
-          `"${(dateOnly || '').replace(/"/g, '""')}"`,
-          `"${(h.location || '').replace(/"/g, '""')}"`,
-          `"${(h.newSN || '').replace(/"/g, '""')}"`,
-          `"${(h.newLot || '-').replace(/"/g, '""')}"`,
-          `"${(h.oldSN || '').replace(/"/g, '""')}"`,
-          `"${(h.note || '-').replace(/"/g, '""')}"`,
-          `"${(h.imageUrl || '').replace(/"/g, '""')}"`
-        ];
-        csvContent += row.join(",") + "\n";
-      });
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.setAttribute("href", url);
-      link.setAttribute("download", "History_Export.csv");
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-
     /* ================= เรนเดอร์ส่วนต่างๆ ================= */
     function renderDashboard(res) {
       const stock = res.stock, rows = res.lotSummary || [];
@@ -587,7 +513,7 @@
         <td>
           <div class="bar"><div class="bg-success" style="width:${r.newCount / r.total * 100}%"></div><div class="bg-warning" style="width:${r.oldCount / r.total * 100}%"></div><div class="bg-primary" style="width:${r.installedCount / r.total * 100}%"></div></div>
           <small class="text-muted">${share}% ของทั้งหมด</small>
-        </td></tr>`;
+        </tr>`;
       }).join('');
       foot.innerHTML = `<tr><td>รวมทุก Lot</td><td class="text-center text-success">${sN}</td><td class="text-center text-warning">${sO}</td><td class="text-center text-primary">${sI}</td><td class="text-center">${sN + sO + sI}</td><td></td></tr>`;
     }
@@ -617,12 +543,13 @@
       if (!list.length) { box.innerHTML = '<div class="col-12 empty">ไม่พบอุปกรณ์ที่ตรงเงื่อนไข</div>'; return; }
       box.innerHTML = list.map(it => {
         const statusClass = it.status === 'ใหม่' ? 'bg-success' : (it.status === 'เก่า' ? 'bg-warning text-dark' : 'bg-danger');
+        let imgBadge = it.image ? `<span class="badge bg-info-subtle text-info-emphasis ms-1"><i class="bi bi-image"></i> มีรูป</span>` : '';
         return `<div class="col-12 col-md-6 col-lg-4"><div class="card item-card h-100"><div class="card-body">
-      <div class="d-flex justify-content-between align-items-start mb-2"><h6 class="mb-0 text-truncate pe-2">${escapeHtml(it.model)}</h6><span class="badge ${statusClass}">${escapeHtml(it.status || 'ไม่ระบุ')}</span></div>
+      <div class="d-flex justify-content-between align-items-start mb-2"><h6 class="mb-0 text-truncate pe-2">${escapeHtml(it.model)} ${imgBadge}</h6><span class="badge ${statusClass}">${escapeHtml(it.status || 'ไม่ระบุ')}</span></div>
       <div class="text-muted small mb-2"><i class="bi bi-upc-scan me-1"></i>${escapeHtml(it.sn)}</div>
       <span class="badge lot-badge bg-secondary-subtle text-secondary-emphasis"><i class="bi bi-box-seam me-1"></i>${escapeHtml(it.lot || '-')}</span>
       <div class="mt-3 d-flex gap-2">
-        <button class="btn btn-sm btn-outline-primary flex-fill" data-model="${escapeHtml(it.model)}" data-sn="${escapeHtml(it.sn)}" data-status="${escapeHtml(it.status)}" data-lot="${escapeHtml(it.lot || '')}" onclick="openEditModal(this)"><i class="bi bi-pencil"></i> แก้ไข</button>
+        <button class="btn btn-sm btn-outline-primary flex-fill" data-model="${escapeHtml(it.model)}" data-sn="${escapeHtml(it.sn)}" data-status="${escapeHtml(it.status)}" data-lot="${escapeHtml(it.lot || '')}" data-image="${escapeHtml(it.image || '')}" onclick="openEditModal(this)"><i class="bi bi-pencil"></i> แก้ไข</button>
         <button class="btn btn-sm btn-outline-danger" data-sn="${escapeHtml(it.sn)}" onclick="deleteEquipment(this.dataset.sn)"><i class="bi bi-trash"></i></button>
       </div></div></div></div>`;
       }).join('');
@@ -641,160 +568,26 @@
       const box = document.getElementById('installedList');
       if (!list.length) { box.innerHTML = '<div class="col-12 empty">ไม่พบรายการติดตั้ง</div>'; return; }
       box.innerHTML = list.map(it => {
-        // เช็กว่ามีลิงก์รูปภาพไหม ถ้ามีให้สร้างปุ่มดูรูป
-        let imgBtn = it.imageUrl ? `<a href="${it.imageUrl}" target="_blank" class="btn btn-sm btn-outline-info"><i class="bi bi-image"></i> รูป</a>` : '';
-
         return `<div class="col-12 col-md-6 col-lg-4"><div class="card item-card h-100"><div class="card-body">
   <div class="d-flex justify-content-between align-items-start mb-2"><h6 class="mb-0 text-truncate pe-2"><i class="bi bi-geo-alt text-primary me-1"></i>${escapeHtml(it.location)}</h6><span class="badge lot-badge bg-secondary-subtle text-secondary-emphasis"><i class="bi bi-box-seam me-1"></i>${escapeHtml(it.lot || '-')}</span></div>
   <div class="text-muted small"><i class="bi bi-upc-scan me-1"></i>${escapeHtml(it.sn)}</div>
   <div class="text-muted small"><i class="bi bi-cpu me-1"></i>${escapeHtml(it.model || 'ไม่ระบุรุ่น')}</div>
   <div class="mt-3 d-flex gap-2">
-    ${imgBtn} <!-- ปุ่มดูรูปจะแทรกอยู่ตรงนี้ถ้ามีรูป -->
     <button class="btn btn-sm btn-outline-primary flex-fill" data-location="${escapeHtml(it.location)}" data-sn="${escapeHtml(it.sn)}" data-model="${escapeHtml(it.model || '')}" data-lot="${escapeHtml(it.lot || '')}" onclick="openEditInstalledModal(this)"><i class="bi bi-pencil"></i> แก้ไข</button>
     <button class="btn btn-sm btn-outline-danger" data-sn="${escapeHtml(it.sn)}" onclick="deleteInstalled(this.dataset.sn)"><i class="bi bi-trash"></i></button>
   </div></div></div></div>`;
       }).join('');
     }
 
-    function openAddInstalledModal() { document.getElementById('installedForm').reset(); document.getElementById('originalSN2').value = ''; document.getElementById('insLot').value = (lotFilter && lotFilter !== '-') ? lotFilter : ''; document.getElementById('installedModalTitle').textContent = 'เพิ่มรายการติดตั้ง'; installedModal.show(); }
-    function openEditInstalledModal(btn) {
-      const d = btn.dataset;
-      document.getElementById('insLocation').value = d.location;
-      document.getElementById('insSN').value = d.sn;
-      document.getElementById('insModel').value = d.model;
-      document.getElementById('insLot').value = (d.lot === '-' ? '' : d.lot);
-      document.getElementById('originalSN2').value = d.sn;
-      document.getElementById('installedModalTitle').textContent = 'แก้ไขรายการติดตั้ง';
-
-      // ล้างค่ารูปภาพเก่าที่ค้างในฟอร์มเมื่อกดเปิด Modal
-      const fileInput = document.getElementById('insImage');
-      if (fileInput) fileInput.value = '';
-
-      installedModal.show();
-    }
-
-    async function saveInstalled(e) {
-      e.preventDefault(); busy('installedSaveBtn', true);
-      try {
-        // 1. จัดการแปลงไฟล์รูปเป็น Base64
-        let imageFile = null;
-        const fileInput = document.getElementById('insImage');
-        if (fileInput && fileInput.files[0]) {
-          const file = fileInput.files[0];
-          const base64Data = await new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result.split(',')[1]);
-            reader.readAsDataURL(file);
-          });
-          imageFile = { data: base64Data, name: file.name, mimeType: file.type };
-        }
-
-        // 2. ส่งข้อมูลไปที่ API
-        const payload = {
-          location: document.getElementById('insLocation').value,
-          sn: document.getElementById('insSN').value,
-          model: document.getElementById('insModel').value,
-          lot: document.getElementById('insLot').value,
-          originalSN: document.getElementById('originalSN2').value,
-          imageFile: imageFile // เพิ่มไฟล์รูปไปกับ payload
-        };
-        const res = await callAPI('saveInstalled', { payload });
-        showToast(res.message, res.success);
-        if (res.success) { installedModal.hide(); loadAll(); }
-      } catch (err) { showToast('บันทึกไม่สำเร็จ: ' + err.message, false); }
-      finally { busy('installedSaveBtn', false, 'บันทึก'); }
-    }
-    async function deleteInstalled(sn) {
-      if (!confirm('ยืนยันลบรายการติดตั้ง SN: ' + sn + '?')) return;
-      try {
-        const res = await callAPI('deleteInstalled', { sn });
-        showToast(res.message, res.success); if (res.success) loadAll();
-      } catch (err) { showToast('ลบไม่สำเร็จ: ' + err.message, false); }
-    }
-
-    function showNewSNInfo() {
-      const v = document.getElementById('swNewSN').value.trim().toUpperCase(); const hit = allStock.filter(i => (i.sn || '').toUpperCase() === v)[0];
-      document.getElementById('swNewInfo').innerHTML = hit ? `พบในคลัง: <b>${escapeHtml(hit.model)}</b> | Lot <b>${escapeHtml(hit.lot)}</b>` : 'Lot จะถูกดึงจากคลังไปผูกกับเครื่องที่ติดตั้งอัตโนมัติ';
-    }
-    function autoFillOldDevice() {
-      const v = document.getElementById('swOldSN').value.trim().toUpperCase(); const hit = allInstalled.filter(i => (i.sn || '').toUpperCase() === v)[0];
-      if (!hit) return;
-      if (!document.getElementById('swLocation').value.trim()) document.getElementById('swLocation').value = hit.location;
-      if (!document.getElementById('swOldModel').value.trim()) document.getElementById('swOldModel').value = hit.model || '';
-      if (!document.getElementById('swOldLot').value.trim()) document.getElementById('swOldLot').value = (hit.lot === '-' ? '' : hit.lot);
-    }
-    async function submitSwap(e) {
-      e.preventDefault(); busy('swapBtn', true);
-      try {
-        let imageFile = null;
-        const fileInput = document.getElementById('swImage');
-        if (fileInput && fileInput.files[0]) {
-          const file = fileInput.files[0];
-          const base64Data = await new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result.split(',')[1]);
-            reader.readAsDataURL(file);
-          });
-          imageFile = { data: base64Data, name: file.name, mimeType: file.type };
-        }
-
-        const payload = {
-          location: document.getElementById('swLocation').value,
-          newSN: document.getElementById('swNewSN').value,
-          oldSN: document.getElementById('swOldSN').value,
-          oldModel: document.getElementById('swOldModel').value,
-          oldLot: document.getElementById('swOldLot').value,
-          note: document.getElementById('swNote').value,
-          imageFile: imageFile // แนบรูปลงไปด้วย
-        };
-        const res = await callAPI('processSwap', { payload });
-        showToast(res.message, res.success);
-        if (res.success) {
-          document.getElementById('swapForm').reset();
-          if (fileInput) fileInput.value = ''; // ล้างค่ารูปภาพ
-          loadAll();
-        }
-      } catch (err) { showToast('บันทึกไม่สำเร็จ: ' + err.message, false); }
-      finally { busy('swapBtn', false, '<i class="bi bi-save me-1"></i>บันทึกการสลับ'); }
-    }
-
-    async function saveEquipment(e) {
-      e.preventDefault();
-      busy('equipSaveBtn', true);
-      try {
-        // อ่านค่าจาก Form
-        const payload = {
-          sn: document.getElementById('eqSN').value,
-          model: document.getElementById('eqModel').value,
-          lot: document.getElementById('eqLot').value,
-          originalSN: document.getElementById('originalSN1').value
-        };
-
-        // ส่งไปประมวลผลที่ Apps Script
-        const res = await callAPI('saveEquipment', { payload });
-        showToast(res.message, res.success);
-
-        if (res.success) {
-          if (typeof equipModal !== 'undefined') equipModal.hide();
-          loadAll(); // โหลดข้อมูลใหม่
-        }
-      } catch (err) {
-        showToast('บันทึกไม่สำเร็จ: ' + err.message, false);
-      } finally {
-        busy('equipSaveBtn', false, 'บันทึก');
-      }
-    }
-
     function openAddModal() {
       const form = document.getElementById('equipmentForm');
       if (form) form.reset();
-
       const originalSN = document.getElementById('originalSN1');
       if (originalSN) originalSN.value = '';
-
+      const imgInput = document.getElementById('eqImage');
+      if (imgInput) imgInput.value = '';
       const titleEl = document.getElementById('equipmentModalTitle');
       if (titleEl) titleEl.textContent = 'เพิ่มอุปกรณ์';
-
       if (typeof equipmentModal !== 'undefined') {
         equipmentModal.show();
       }
@@ -806,30 +599,185 @@
       const status = btn.getAttribute('data-status');
       const lot = btn.getAttribute('data-lot');
 
-      // ดึงฟอร์มใน Modal มาจัดการตามลำดับช่องกรอก (Input/Select)
       const modalEl = document.getElementById('equipmentModal') || document.querySelector('.modal');
       if (modalEl) {
         const inputs = modalEl.querySelectorAll('input, select');
         if (inputs.length >= 4) {
-          inputs[0].value = model || '';          // ช่องรุ่นอุปกรณ์
-          inputs[1].value = sn || '';             // ช่อง Serial Number
-          inputs[2].value = status || 'ใหม่';       // ช่องสถานะ
-          inputs[3].value = (lot === '-' ? '' : lot); // ช่อง Lot อุปกรณ์
+          inputs[0].value = model || '';
+          inputs[1].value = sn || '';
+          inputs[2].value = status || 'ใหม่';
+          inputs[3].value = (lot === '-' ? '' : lot);
         }
       }
 
-      // เซฟ SN เดิมไว้ที่ฟิลด์ซ่อน (ถ้ามี)
       const orig = document.getElementById('originalSN1');
       if (orig) orig.value = sn || '';
+      const imgInput = document.getElementById('eqImage');
+      if (imgInput) imgInput.value = ''; // เคลียร์ช่องเลือกไฟล์ใหม่ (ถ้ามีรูปเดิมอยู่แล้วปล่อยว่างไว้หากไม่ต้องการเปลี่ยน)
 
-      // เปลี่ยนหัวข้อ Modal เป็น "แก้ไขอุปกรณ์"
       const titleEl = document.getElementById('equipmentModalTitle');
       if (titleEl) titleEl.textContent = 'แก้ไขอุปกรณ์';
 
-      // เปิด Modal
       if (typeof equipmentModal !== 'undefined') {
         equipmentModal.show();
       }
+    }
+
+    // ฟังก์ชันแปลงไฟล์ภาพเป็น Base64
+    function convertFileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+      });
+    }
+
+    async function saveEquipment(e) {
+      e.preventDefault();
+      busy('equipSaveBtn', true);
+      try {
+        const fileInput = document.getElementById('eqImage');
+        let imageBase64 = '';
+        if (fileInput && fileInput.files && fileInput.files[0]) {
+          imageBase64 = await convertFileToBase64(fileInput.files[0]);
+        }
+
+        const payload = {
+          sn: document.getElementById('eqSN').value,
+          model: document.getElementById('eqModel').value,
+          status: document.getElementById('eqStatus').value,
+          lot: document.getElementById('eqLot').value,
+          originalSN: document.getElementById('originalSN1').value,
+          image: imageBase64 // ส่งรูปภาพแบบ Base64 ไปด้วย
+        };
+
+        const res = await callAPI('saveEquipment', { payload });
+        showToast(res.message, res.success);
+        if (res.success) {
+          if (typeof equipmentModal !== 'undefined') equipmentModal.hide();
+          loadAll();
+        }
+      } catch (err) {
+        showToast('บันทึกไม่สำเร็จ: ' + err.message, false);
+      } finally {
+        busy('equipSaveBtn', false, 'บันทึก');
+      }
+    }
+
+    async function deleteEquipment(sn) {
+      if (!confirm('ยืนยันลบอุปกรณ์ SN: ' + sn + '?')) return;
+      try {
+        const res = await callAPI('deleteEquipment', { sn });
+        showToast(res.message, res.success);
+        if (res.success) loadAll();
+      } catch (err) {
+        showToast('ลบไม่สำเร็จ: ' + err.message, false);
+      }
+    }
+
+    async function saveInstalled(e) {
+      e.preventDefault();
+      busy('installedSaveBtn', true, 'บันทึก');
+      try {
+        const payload = {
+          location: document.getElementById('insLocation').value,
+          sn: document.getElementById('insSN').value,
+          model: document.getElementById('insModel').value,
+          lot: document.getElementById('insLot').value,
+          originalSN: document.getElementById('originalSN2').value
+        };
+        const res = await callAPI('saveInstalled', { payload });
+        showToast(res.message, res.success);
+        if (res.success) {
+          installedModal.hide();
+          loadAll();
+        }
+      } catch (err) {
+        showToast('บันทึกไม่สำเร็จ: ' + err.message, false);
+      } finally {
+        busy('installedSaveBtn', false, 'บันทึก');
+      }
+    }
+
+    async function submitSwap(e) {
+      e.preventDefault();
+      busy('swapBtn', true, '<i class="bi bi-save me-1"></i>บันทึกการสลับ');
+      try {
+        const payload = {
+          location: document.getElementById('swLocation').value,
+          newSN: document.getElementById('swNewSN').value,
+          oldSN: document.getElementById('swOldSN').value,
+          oldModel: document.getElementById('swOldModel').value,
+          oldLot: document.getElementById('swOldLot').value,
+          note: document.getElementById('swNote').value
+        };
+        const res = await callAPI('processSwap', { payload });
+        showToast(res.message, res.success);
+        if (res.success) {
+          document.getElementById('swapForm').reset();
+          loadAll();
+        }
+      } catch (err) {
+        showToast('บันทึกไม่สำเร็จ: ' + err.message, false);
+      } finally {
+        busy('swapBtn', false, '<i class="bi bi-save me-1"></i>บันทึกการสลับ');
+      }
+    }
+
+    // ฟังก์ชันช่วยเติมข้อมูลอัตโนมัติขณะสลับอุปกรณ์ (ถ้ายังไม่มี)
+    function showNewSNInfo() {
+      const v = document.getElementById('swNewSN').value.trim().toUpperCase();
+      const hit = allStock.filter(i => (i.sn || '').toUpperCase() === v)[0];
+      document.getElementById('swNewInfo').innerHTML = hit ? `พบในคลัง: <b>${escapeHtml(hit.model)}</b> | Lot <b>${escapeHtml(hit.lot)}</b>` : 'Lot จะถูกดึงจากคลังไปผูกกับเครื่องที่ติดตั้งอัตโนมัติ';
+    }
+
+    function autoFillOldDevice() {
+      const v = document.getElementById('swOldSN').value.trim().toUpperCase();
+      const hit = allInstalled.filter(i => (i.sn || '').toUpperCase() === v)[0];
+      if (!hit) return;
+      if (!document.getElementById('swLocation').value.trim()) document.getElementById('swLocation').value = hit.location;
+      if (!document.getElementById('swOldModel').value.trim()) document.getElementById('swOldModel').value = hit.model || '';
+      if (!document.getElementById('swOldLot').value.trim()) document.getElementById('swOldLot').value = (hit.lot === '-' ? '' : hit.lot);
+    }
+
+    async function searchHistoryByDate(e) {
+      e.preventDefault();
+      const start = document.getElementById('histStart').value;
+      const end = document.getElementById('histEnd').value;
+      if (start > end) { showToast('วันที่เริ่มต้น ต้องไม่เกินวันที่สิ้นสุด', false); return; }
+
+      try {
+        busy('btnSearchHistory', true, '<i class="bi bi-search"></i> ค้นหา');
+        const res = await callAPI('getHistoryByDateRange', { startDate: start, endDate: end });
+        currentHistory = res || [];
+        renderHistory(currentHistory);
+        showToast('ดึงข้อมูลประวัติเรียบร้อย พบ ' + currentHistory.length + ' รายการ', true);
+      } catch (err) {
+        showToast('ดึงประวัติไม่สำเร็จ: ' + err.message, false);
+      } finally {
+        busy('btnSearchHistory', false, '<i class="bi bi-search"></i> ค้นหา');
+      }
+    }
+
+    function renderHistory(rows) {
+      const body = document.getElementById('historyBody');
+      if (!body) return;
+      if (!rows.length) { 
+        body.innerHTML = '<tr><td colspan="6" class="empty text-center text-muted">ไม่พบประวัติในช่วงเวลานี้</td></tr>'; 
+        return; 
+      }
+      body.innerHTML = rows.map(h => {
+        let dateOnly = h.date ? h.date.split(' ')[0] : '-';
+        return `<tr>
+          <td class="small text-nowrap">${escapeHtml(dateOnly)}</td>
+          <td>${escapeHtml(h.location)}</td>
+          <td class="text-success fw-semibold">${escapeHtml(h.newSN)}</td>
+          <td><span class="badge bg-secondary-subtle text-secondary-emphasis">${escapeHtml(h.newLot || '-')}</span></td>
+          <td class="text-muted">${escapeHtml(h.oldSN)}</td>
+          <td class="small">${escapeHtml(h.note || '-')}</td>
+        </tr>`
+      }).join('');
     }
   </script>
 </body>
