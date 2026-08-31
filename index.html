@@ -580,11 +580,13 @@
     }
 
     function openAddModal() {
+      if (!verifyAdminPassword()) return; // เช็ครหัสผ่านก่อนเปิดฟอร์มเพิ่ม
+
       const form = document.getElementById('equipmentForm');
       if (form) form.reset();
-      const originalSN = document.getElementById('originalSN1');
+      const originalSN = document.getElementById('originalSN');
       if (originalSN) originalSN.value = '';
-      const imgInput = document.getElementById('eqImage');
+      const imgInput = document.getElementById('equipmentImage');
       if (imgInput) imgInput.value = '';
       const titleEl = document.getElementById('equipmentModalTitle');
       if (titleEl) titleEl.textContent = 'เพิ่มอุปกรณ์';
@@ -592,28 +594,23 @@
         equipmentModal.show();
       }
     }
-
     function openEditModal(btn) {
+      if (!verifyAdminPassword()) return; // เช็ครหัสผ่านก่อนเปิดฟอร์มแก้ไข
+
       const model = btn.getAttribute('data-model');
       const sn = btn.getAttribute('data-sn');
       const status = btn.getAttribute('data-status');
       const lot = btn.getAttribute('data-lot');
 
-      const modalEl = document.getElementById('equipmentModal') || document.querySelector('.modal');
-      if (modalEl) {
-        const inputs = modalEl.querySelectorAll('input, select');
-        if (inputs.length >= 4) {
-          inputs[0].value = model || '';
-          inputs[1].value = sn || '';
-          inputs[2].value = status || 'ใหม่';
-          inputs[3].value = (lot === '-' ? '' : lot);
-        }
-      }
+      document.getElementById('modelName').value = model || '';
+      document.getElementById('sn').value = sn || '';
+      document.getElementById('status').value = status || 'ใหม่';
+      document.getElementById('lot').value = (lot === '-' ? '' : lot);
 
-      const orig = document.getElementById('originalSN1');
+      const orig = document.getElementById('originalSN');
       if (orig) orig.value = sn || '';
-      const imgInput = document.getElementById('eqImage');
-      if (imgInput) imgInput.value = ''; // เคลียร์ช่องเลือกไฟล์ใหม่ (ถ้ามีรูปเดิมอยู่แล้วปล่อยว่างไว้หากไม่ต้องการเปลี่ยน)
+      const imgInput = document.getElementById('equipmentImage');
+      if (imgInput) imgInput.value = '';
 
       const titleEl = document.getElementById('equipmentModalTitle');
       if (titleEl) titleEl.textContent = 'แก้ไขอุปกรณ์';
@@ -635,21 +632,21 @@
 
     async function saveEquipment(e) {
       e.preventDefault();
-      busy('equipSaveBtn', true);
+      busy('equipmentSaveBtn', true, 'บันทึก');
       try {
-        const fileInput = document.getElementById('eqImage');
+        const fileInput = document.getElementById('equipmentImage');
         let imageBase64 = '';
         if (fileInput && fileInput.files && fileInput.files[0]) {
           imageBase64 = await convertFileToBase64(fileInput.files[0]);
         }
 
         const payload = {
-          sn: document.getElementById('eqSN').value,
-          model: document.getElementById('eqModel').value,
-          status: document.getElementById('eqStatus').value,
-          lot: document.getElementById('eqLot').value,
-          originalSN: document.getElementById('originalSN1').value,
-          image: imageBase64 // ส่งรูปภาพแบบ Base64 ไปด้วย
+          sn: document.getElementById('sn').value,
+          model: document.getElementById('modelName').value,
+          status: document.getElementById('status').value,
+          lot: document.getElementById('lot').value,
+          originalSN: document.getElementById('originalSN').value,
+          image: imageBase64
         };
 
         const res = await callAPI('saveEquipment', { payload });
@@ -661,11 +658,12 @@
       } catch (err) {
         showToast('บันทึกไม่สำเร็จ: ' + err.message, false);
       } finally {
-        busy('equipSaveBtn', false, 'บันทึก');
+        busy('equipmentSaveBtn', false, 'บันทึก');
       }
     }
 
     async function deleteEquipment(sn) {
+      if (!verifyAdminPassword()) return; // เช็ครหัสผ่านก่อนลบ
       if (!confirm('ยืนยันลบอุปกรณ์ SN: ' + sn + '?')) return;
       try {
         const res = await callAPI('deleteEquipment', { sn });
@@ -690,7 +688,7 @@
         const res = await callAPI('saveInstalled', { payload });
         showToast(res.message, res.success);
         if (res.success) {
-          installedModal.hide();
+          if (typeof installedModal !== 'undefined') installedModal.hide();
           loadAll();
         }
       } catch (err) {
@@ -700,8 +698,23 @@
       }
     }
 
+    async function deleteInstalled(sn) {
+      if (!verifyAdminPassword()) return; // เช็ครหัสผ่านก่อนลบรายการติดตั้ง
+      if (!confirm('ยืนยันลบรายการติดตั้ง SN: ' + sn + '?')) return;
+      try {
+        const res = await callAPI('deleteInstalled', { sn });
+        showToast(res.message, res.success);
+        if (res.success) loadAll();
+      } catch (err) {
+        showToast('ลบไม่สำเร็จ: ' + err.message, false);
+      }
+    }
     async function submitSwap(e) {
       e.preventDefault();
+
+      // เช็ครหัสผ่านก่อนกดบันทึกการสลับอุปกรณ์
+      if (!verifyAdminPassword()) return;
+
       busy('swapBtn', true, '<i class="bi bi-save me-1"></i>บันทึกการสลับ');
       try {
         const payload = {
@@ -725,7 +738,6 @@
       }
     }
 
-    // ฟังก์ชันช่วยเติมข้อมูลอัตโนมัติขณะสลับอุปกรณ์ (ถ้ายังไม่มี)
     function showNewSNInfo() {
       const v = document.getElementById('swNewSN').value.trim().toUpperCase();
       const hit = allStock.filter(i => (i.sn || '').toUpperCase() === v)[0];
@@ -763,9 +775,9 @@
     function renderHistory(rows) {
       const body = document.getElementById('historyBody');
       if (!body) return;
-      if (!rows.length) { 
-        body.innerHTML = '<tr><td colspan="6" class="empty text-center text-muted">ไม่พบประวัติในช่วงเวลานี้</td></tr>'; 
-        return; 
+      if (!rows.length) {
+        body.innerHTML = '<tr><td colspan="6" class="empty text-center text-muted">ไม่พบประวัติในช่วงเวลานี้</td></tr>';
+        return;
       }
       body.innerHTML = rows.map(h => {
         let dateOnly = h.date ? h.date.split(' ')[0] : '-';
@@ -779,6 +791,60 @@
         </tr>`
       }).join('');
     }
+
+    /* ================= ฟังก์ชันตรวจสอบรหัสผ่านกลาง ================= */
+    function verifyAdminPassword() {
+      const pwd = prompt('กรุณากรอกรหัสผ่านเพื่อยืนยันการทำรายการ:');
+      if (pwd === null) {
+        return false; // กดยกเลิก
+      }
+      // * กำหนดรหัสผ่านตรงนี้ (สามารถเปลี่ยน '1234' เป็นรหัสที่ต้องการได้เลยครับ) *
+      if (pwd === '1234') {
+        return true;
+      } else {
+        alert('รหัสผ่านไม่ถูกต้อง! ไม่อนุญาตให้ทำรายการ');
+        return false;
+      }
+    }
+
+    function openAddInstalledModal() {
+      if (!verifyAdminPassword()) return; // เช็ครหัสผ่านก่อนเปิดเพิ่มรายการติดตั้ง
+
+      const form = document.getElementById('installedForm');
+      if (form) form.reset();
+      const originalSN2 = document.getElementById('originalSN2');
+      if (originalSN2) originalSN2.value = '';
+      const titleEl = document.getElementById('installedModalTitle');
+      if (titleEl) titleEl.textContent = 'เพิ่มรายการติดตั้ง';
+      if (typeof installedModal !== 'undefined') {
+        installedModal.show();
+      }
+    }
+
+    function openEditInstalledModal(btn) {
+      if (!verifyAdminPassword()) return; // เช็ครหัสผ่านก่อนแก้ไขรายการติดตั้ง
+
+      const location = btn.getAttribute('data-location');
+      const sn = btn.getAttribute('data-sn');
+      const model = btn.getAttribute('data-model');
+      const lot = btn.getAttribute('data-lot');
+
+      document.getElementById('insLocation').value = location || '';
+      document.getElementById('insSN').value = sn || '';
+      document.getElementById('insModel').value = model || '';
+      document.getElementById('insLot').value = (lot === '-' ? '' : lot);
+
+      const orig = document.getElementById('originalSN2');
+      if (orig) orig.value = sn || '';
+
+      const titleEl = document.getElementById('installedModalTitle');
+      if (titleEl) titleEl.textContent = 'แก้ไขรายการติดตั้ง';
+
+      if (typeof installedModal !== 'undefined') {
+        installedModal.show();
+      }
+    }
+
   </script>
 </body>
 
