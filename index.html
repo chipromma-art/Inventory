@@ -1,415 +1,640 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
-<meta charset="utf-8">
-<title>ระบบจัดการอุปกรณ์</title>
-<!-- Icon ที่แท็บเบราว์เซอร์ -->
-<link rel="icon" href="https://img1.pic.in.th/images/6819062.png" type="image/png">
-<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-<style>
-  * { font-family: 'Kanit', sans-serif !important; }
-  body { background:#f5f7fb; padding-bottom:60px; }
-  .stat-card { border:0; border-radius:14px; box-shadow:0 2px 10px rgba(0,0,0,.06); }
-  .stat-num { font-size:2rem; font-weight:700; line-height:1.1; }
-  .item-card { border:0; border-radius:12px; box-shadow:0 1px 6px rgba(0,0,0,.07); transition:.15s; }
-  .item-card:hover { transform:translateY(-2px); box-shadow:0 4px 14px rgba(0,0,0,.1); }
-  .lot-badge { font-size:.75rem; }
-  .nav-pills .nav-link { border-radius:10px; font-weight:600; }
-  .toast-wrap { position:fixed; top:16px; right:16px; z-index:1090; }
-  .lot-row:hover { background:#f1f5ff; cursor:pointer; }
-  .empty { color:#9aa3af; text-align:center; padding:36px 0; }
-  .bar { display:flex; height:9px; border-radius:6px; overflow:hidden; background:#e9ecef; }
-  .filter-group .btn-check:checked + .btn-outline-secondary { background-color: #6c757d; color: white; border-color: #6c757d; }
-  .filter-group .btn-check:checked + .btn-outline-success { background-color: #198754; color: white; border-color: #198754; }
-  .filter-group .btn-check:checked + .btn-outline-warning { background-color: #ffc107; color: black; border-color: #ffc107; }
-</style>
+  <meta charset="utf-8">
+  <title>ระบบจัดการอุปกรณ์</title>
+  <!-- Icon ที่แท็บเบราว์เซอร์ -->
+  <link rel="icon" href="https://img1.pic.in.th/images/6819062.png" type="image/png">
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    * {
+      font-family: 'Kanit', sans-serif !important;
+    }
+
+    body {
+      background: #f5f7fb;
+      padding-bottom: 60px;
+    }
+
+    .stat-card {
+      border: 0;
+      border-radius: 14px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, .06);
+    }
+
+    .stat-num {
+      font-size: 2rem;
+      font-weight: 700;
+      line-height: 1.1;
+    }
+
+    .item-card {
+      border: 0;
+      border-radius: 12px;
+      box-shadow: 0 1px 6px rgba(0, 0, 0, .07);
+      transition: .15s;
+    }
+
+    .item-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, .1);
+    }
+
+    .lot-badge {
+      font-size: .75rem;
+    }
+
+    .nav-pills .nav-link {
+      border-radius: 10px;
+      font-weight: 600;
+    }
+
+    .toast-wrap {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 1090;
+    }
+
+    .lot-row:hover {
+      background: #f1f5ff;
+      cursor: pointer;
+    }
+
+    .empty {
+      color: #9aa3af;
+      text-align: center;
+      padding: 36px 0;
+    }
+
+    .bar {
+      display: flex;
+      height: 9px;
+      border-radius: 6px;
+      overflow: hidden;
+      background: #e9ecef;
+    }
+
+    .filter-group .btn-check:checked+.btn-outline-secondary {
+      background-color: #6c757d;
+      color: white;
+      border-color: #6c757d;
+    }
+
+    .filter-group .btn-check:checked+.btn-outline-success {
+      background-color: #198754;
+      color: white;
+      border-color: #198754;
+    }
+
+    .filter-group .btn-check:checked+.btn-outline-warning {
+      background-color: #ffc107;
+      color: black;
+      border-color: #ffc107;
+    }
+  </style>
 </head>
+
 <body>
 
-<nav class="navbar navbar-dark bg-primary mb-3">
+  <nav class="navbar navbar-dark bg-primary mb-3">
+    <div class="container">
+      <span class="navbar-brand mb-0 h1 d-flex align-items-center">
+        <!-- Icon ที่ Navbar -->
+        <img src="https://img1.pic.in.th/images/6819062.png" alt="Logo" width="30" height="30" class="me-2 rounded">
+        ระบบจัดการอุปกรณ์
+      </span>
+      <button class="btn btn-sm btn-light" onclick="loadAll()"><i class="bi bi-arrow-clockwise"></i> รีเฟรช</button>
+    </div>
+  </nav>
+
   <div class="container">
-    <span class="navbar-brand mb-0 h1 d-flex align-items-center">
-      <!-- Icon ที่ Navbar -->
-      <img src="https://img1.pic.in.th/images/6819062.png" alt="Logo" width="30" height="30" class="me-2 rounded">
-      ระบบจัดการอุปกรณ์
-    </span>
-    <button class="btn btn-sm btn-light" onclick="loadAll()"><i class="bi bi-arrow-clockwise"></i> รีเฟรช</button>
-  </div>
-</nav>
 
-<div class="container">
+    <ul class="nav nav-pills gap-2 mb-3 shadow-sm p-2 bg-white rounded-3">
+      <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill"
+          data-bs-target="#tabDash">แดชบอร์ด</button></li>
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tabSwap">สลับอุปกรณ์</button>
+      </li>
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="pill"
+          data-bs-target="#tabStock">คลังอุปกรณ์</button></li>
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="pill"
+          data-bs-target="#tabInstalled">ติดตั้งแล้ว</button></li>
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tabHistory">ประวัติ</button>
+      </li>
+    </ul>
 
-  <ul class="nav nav-pills gap-2 mb-3 shadow-sm p-2 bg-white rounded-3">
-    <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tabDash">แดชบอร์ด</button></li>
-    <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tabSwap">สลับอุปกรณ์</button></li>
-    <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tabStock">คลังอุปกรณ์</button></li>
-    <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tabInstalled">ติดตั้งแล้ว</button></li>
-    <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tabHistory">ประวัติ</button></li>
-  </ul>
+    <div class="tab-content">
 
-  <div class="tab-content">
-
-    <!-- แดชบอร์ด -->
-    <div class="tab-pane fade show active" id="tabDash">
-      <div class="row g-3 mb-3">
-        <div class="col-6 col-lg-3"><div class="card stat-card h-100"><div class="card-body"><div class="text-muted small">เครื่องใหม่ในคลัง</div><div class="stat-num text-success" id="statNew">0</div></div></div></div>
-        <div class="col-6 col-lg-3"><div class="card stat-card h-100"><div class="card-body"><div class="text-muted small">เครื่องเก่าในคลัง</div><div class="stat-num text-warning" id="statOld">0</div></div></div></div>
-        <div class="col-6 col-lg-3"><div class="card stat-card h-100"><div class="card-body"><div class="text-muted small">ติดตั้งใช้งานอยู่</div><div class="stat-num text-primary" id="statInstalled">0</div></div></div></div>
-        <div class="col-6 col-lg-3"><div class="card stat-card h-100"><div class="card-body"><div class="text-muted small">อุปกรณ์ทั้งหมด</div><div class="stat-num text-dark" id="statTotal">0</div></div></div></div>
-      </div>
-      <div class="card stat-card"><div class="card-body">
-        <div class="d-flex justify-content-between align-items-center mb-1">
-          <h5 class="mb-0"><i class="bi bi-box-seam me-2 text-primary"></i>จำนวนอุปกรณ์แยกตาม Lot</h5>
-          <span class="badge bg-primary-subtle text-primary-emphasis" id="lotCount">0 ล็อต</span>
-        </div>
-        <div class="text-muted small mb-3">นับรวมทั้งเครื่องที่อยู่ในคลัง และเครื่องที่ถูกนำไปเปลี่ยน/ติดตั้งใช้งานอยู่หน้างาน</div>
-        <div class="table-responsive">
-          <table class="table table-sm align-middle mb-0">
-            <thead class="table-light">
-              <tr><th>Lot</th><th class="text-center" style="width:96px">คลัง (ใหม่)</th><th class="text-center" style="width:96px">คลัง (เก่า)</th><th class="text-center" style="width:110px">ติดตั้งอยู่</th><th class="text-center" style="width:80px">รวม</th><th style="width:26%">สัดส่วน</th></tr>
-            </thead>
-            <tbody id="lotSummaryBody"></tbody>
-            <tfoot class="table-light fw-bold" id="lotSummaryFoot"></tfoot>
-          </table>
-        </div>
-      </div></div>
-    </div>
-
-    <!-- สลับอุปกรณ์ -->
-    <div class="tab-pane fade" id="tabSwap">
-      <div class="card stat-card"><div class="card-body">
-        <h5 class="mb-3"><i class="bi bi-arrow-left-right me-2 text-primary"></i>บันทึกการสลับอุปกรณ์</h5>
-        <form id="swapForm" class="row g-3">
-          <div class="col-md-6"><label class="form-label">สถานที่ติดตั้ง <span class="text-danger">*</span></label><input type="text" class="form-control" id="swLocation" list="locationList" autocomplete="off" required><datalist id="locationList"></datalist></div>
-          <div class="col-md-6"><label class="form-label">SN เครื่องใหม่ (จากคลัง) <span class="text-danger">*</span></label><input type="text" class="form-control" id="swNewSN" list="stockSNList" autocomplete="off" required><datalist id="stockSNList"></datalist><div class="form-text" id="swNewInfo">Lot จะถูกดึงจากคลังไปผูกกับเครื่องที่ติดตั้งอัตโนมัติ</div></div>
-          <div class="col-md-4"><label class="form-label">SN เครื่องเก่าที่ถอดออก <span class="text-danger">*</span></label><input type="text" class="form-control" id="swOldSN" list="installedSNList" autocomplete="off" required><datalist id="installedSNList"></datalist></div>
-          <div class="col-md-4"><label class="form-label">รุ่นเครื่องเก่า</label><input type="text" class="form-control" id="swOldModel" placeholder="ไม่ระบุรุ่น"></div>
-          <div class="col-md-4"><label class="form-label">Lot เครื่องเก่า</label><input type="text" class="form-control" id="swOldLot" list="lotSuggestions" placeholder="เว้นว่าง = ดึงอัตโนมัติ" autocomplete="off"></div>
-          <div class="col-12"><label class="form-label">หมายเหตุ</label><textarea class="form-control" id="swNote" rows="2"></textarea></div>
-          <div class="col-12"><button class="btn btn-primary" type="submit" id="swapBtn"><i class="bi bi-save me-1"></i>บันทึกการสลับ</button></div>
-        </form>
-      </div></div>
-    </div>
-
-    <!-- คลังอุปกรณ์ -->
-    <div class="tab-pane fade" id="tabStock">
-      <div class="d-flex gap-2 mb-2">
-        <div class="input-group"><span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span><input type="text" class="form-control border-start-0 ps-0" id="stockSearch" placeholder="ค้นหา SN / รุ่น / Lot"></div>
-        <button class="btn btn-primary flex-shrink-0 shadow-sm" onclick="openAddModal()"><i class="bi bi-plus-lg"></i> เพิ่มอุปกรณ์</button>
-      </div>
-      <div class="d-flex flex-wrap gap-2 mb-3 align-items-center bg-white p-2 rounded shadow-sm">
-        <span class="text-muted small ms-1 me-2"><i class="bi bi-funnel"></i> ตัวกรอง:</span>
-        <div class="btn-group btn-group-sm filter-group" role="group">
-          <input type="radio" class="btn-check" name="btnStatusFilter" id="btnStatusAll" autocomplete="off" checked onclick="setStatusFilter('all')"><label class="btn btn-outline-secondary" for="btnStatusAll">ทั้งหมด</label>
-          <input type="radio" class="btn-check" name="btnStatusFilter" id="btnStatusNew" autocomplete="off" onclick="setStatusFilter('ใหม่')"><label class="btn btn-outline-success" for="btnStatusNew">เครื่องใหม่</label>
-          <input type="radio" class="btn-check" name="btnStatusFilter" id="btnStatusOld" autocomplete="off" onclick="setStatusFilter('เก่า')"><label class="btn btn-outline-warning" for="btnStatusOld">เครื่องเก่า</label>
-        </div>
-        <div class="vr mx-1 d-none d-md-block text-muted"></div>
-        <div class="dropdown">
-          <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" id="lotDropdownBtn">ทุก Lot</button>
-          <ul class="dropdown-menu shadow" id="lotFilterMenu" style="max-height: 250px; overflow-y: auto;"></ul>
-        </div>
-      </div>
-      <div id="stockFilterInfo"></div>
-      <div class="row g-3" id="stockList"></div>
-    </div>
-
-    <!-- ติดตั้งแล้ว -->
-    <div class="tab-pane fade" id="tabInstalled">
-      <div class="d-flex gap-2 mb-3">
-        <div class="input-group"><span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span><input type="text" class="form-control border-start-0 ps-0" id="installedSearch" placeholder="ค้นหา สถานที่ / SN / รุ่น / Lot"></div>
-        <button class="btn btn-primary flex-shrink-0 shadow-sm" onclick="openAddInstalledModal()"><i class="bi bi-plus-lg"></i> เพิ่มรายการ</button>
-      </div>
-      <div id="installedFilterInfo"></div>
-      <div class="row g-3" id="installedList"></div>
-    </div>
-
-    <!-- ประวัติ -->
-    <div class="tab-pane fade" id="tabHistory">
-      <div class="card stat-card"><div class="card-body">
-        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-          <h5 class="mb-0"><i class="bi bi-clock-history me-2 text-primary"></i>บันทึกประวัติการทำงาน</h5>
-          <!-- ปุ่ม Export Excel -->
-          <button class="btn btn-success btn-sm shadow-sm" onclick="exportHistoryExcel()"><i class="bi bi-file-earmark-excel me-1"></i> Export Excel</button>
-        </div>
-        <!-- ช่องเลือกช่วงวันที่ -->
-        <form id="historyFilterForm" class="row g-2 align-items-end mb-3 bg-light p-2 rounded border" onsubmit="searchHistoryByDate(event)">
-          <div class="col-12 col-md-auto"><label class="form-label small text-muted mb-1">ตั้งแต่วันที่</label><input type="date" class="form-control form-control-sm" id="histStart" required></div>
-          <div class="col-12 col-md-auto"><label class="form-label small text-muted mb-1">ถึงวันที่</label><input type="date" class="form-control form-control-sm" id="histEnd" required></div>
-          <div class="col-12 col-md-auto d-flex gap-2">
-            <button type="submit" class="btn btn-primary btn-sm" id="btnSearchHistory"><i class="bi bi-search"></i> ค้นหา</button>
-            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="loadAll()">แสดง 20 รายการล่าสุด</button>
+      <!-- แดชบอร์ด -->
+      <div class="tab-pane fade show active" id="tabDash">
+        <div class="row g-3 mb-3">
+          <div class="col-6 col-lg-3">
+            <div class="card stat-card h-100">
+              <div class="card-body">
+                <div class="text-muted small">เครื่องใหม่ในคลัง</div>
+                <div class="stat-num text-success" id="statNew">0</div>
+              </div>
+            </div>
           </div>
-        </form>
-        <div class="table-responsive">
-          <table class="table table-sm table-hover align-middle">
-            <thead class="table-light"><tr><th>วันที่</th><th>สถานที่</th><th>SN ใหม่</th><th>Lot</th><th>SN เก่า</th><th>หมายเหตุ</th></tr></thead>
-            <tbody id="historyBody"></tbody>
-          </table>
+          <div class="col-6 col-lg-3">
+            <div class="card stat-card h-100">
+              <div class="card-body">
+                <div class="text-muted small">เครื่องเก่าในคลัง</div>
+                <div class="stat-num text-warning" id="statOld">0</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-lg-3">
+            <div class="card stat-card h-100">
+              <div class="card-body">
+                <div class="text-muted small">ติดตั้งใช้งานอยู่</div>
+                <div class="stat-num text-primary" id="statInstalled">0</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-lg-3">
+            <div class="card stat-card h-100">
+              <div class="card-body">
+                <div class="text-muted small">อุปกรณ์ทั้งหมด</div>
+                <div class="stat-num text-dark" id="statTotal">0</div>
+              </div>
+            </div>
+          </div>
         </div>
-      </div></div>
-    </div>
+        <div class="card stat-card">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <h5 class="mb-0"><i class="bi bi-box-seam me-2 text-primary"></i>จำนวนอุปกรณ์แยกตาม Lot</h5>
+              <span class="badge bg-primary-subtle text-primary-emphasis" id="lotCount">0 ล็อต</span>
+            </div>
+            <div class="text-muted small mb-3">นับรวมทั้งเครื่องที่อยู่ในคลัง
+              และเครื่องที่ถูกนำไปเปลี่ยน/ติดตั้งใช้งานอยู่หน้างาน</div>
+            <div class="table-responsive">
+              <table class="table table-sm align-middle mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>Lot</th>
+                    <th class="text-center" style="width:96px">คลัง (ใหม่)</th>
+                    <th class="text-center" style="width:96px">คลัง (เก่า)</th>
+                    <th class="text-center" style="width:110px">ติดตั้งอยู่</th>
+                    <th class="text-center" style="width:80px">รวม</th>
+                    <th style="width:26%">สัดส่วน</th>
+                  </tr>
+                </thead>
+                <tbody id="lotSummaryBody"></tbody>
+                <tfoot class="table-light fw-bold" id="lotSummaryFoot"></tfoot>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
 
+      <!-- สลับอุปกรณ์ -->
+      <div class="tab-pane fade" id="tabSwap">
+        <div class="card stat-card">
+          <div class="card-body">
+            <h5 class="mb-3"><i class="bi bi-arrow-left-right me-2 text-primary"></i>บันทึกการสลับอุปกรณ์</h5>
+            <form id="swapForm" class="row g-3">
+              <div class="col-md-6"><label class="form-label">สถานที่ติดตั้ง <span
+                    class="text-danger">*</span></label><input type="text" class="form-control" id="swLocation"
+                  list="locationList" autocomplete="off" required><datalist id="locationList"></datalist></div>
+              <div class="col-md-6"><label class="form-label">SN เครื่องใหม่ (จากคลัง) <span
+                    class="text-danger">*</span></label><input type="text" class="form-control" id="swNewSN"
+                  list="stockSNList" autocomplete="off" required><datalist id="stockSNList"></datalist>
+                <div class="form-text" id="swNewInfo">Lot จะถูกดึงจากคลังไปผูกกับเครื่องที่ติดตั้งอัตโนมัติ</div>
+              </div>
+              <div class="col-md-4"><label class="form-label">SN เครื่องเก่าที่ถอดออก <span
+                    class="text-danger">*</span></label><input type="text" class="form-control" id="swOldSN"
+                  list="installedSNList" autocomplete="off" required><datalist id="installedSNList"></datalist></div>
+              <div class="col-md-4"><label class="form-label">รุ่นเครื่องเก่า</label><input type="text"
+                  class="form-control" id="swOldModel" placeholder="ไม่ระบุรุ่น"></div>
+              <div class="col-md-4"><label class="form-label">Lot เครื่องเก่า</label><input type="text"
+                  class="form-control" id="swOldLot" list="lotSuggestions" placeholder="เว้นว่าง = ดึงอัตโนมัติ"
+                  autocomplete="off"></div>
+              <div class="mb-3">
+                <label for="swImage" class="form-label">แนบรูปภาพ (ถ้ามี)</label>
+                <input type="file" id="swImage" class="form-control" accept="image/*">
+              </div>
+              <div class="col-12"><label class="form-label">หมายเหตุ</label><textarea class="form-control" id="swNote"
+                  rows="2"></textarea></div>
+              <div class="col-12"><button class="btn btn-primary" type="submit" id="swapBtn"><i
+                    class="bi bi-save me-1"></i>บันทึกการสลับ</button></div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- คลังอุปกรณ์ -->
+      <div class="tab-pane fade" id="tabStock">
+        <div class="d-flex gap-2 mb-2">
+          <div class="input-group"><span class="input-group-text bg-white"><i
+                class="bi bi-search text-muted"></i></span><input type="text" class="form-control border-start-0 ps-0"
+              id="stockSearch" placeholder="ค้นหา SN / รุ่น / Lot"></div>
+          <button class="btn btn-primary flex-shrink-0 shadow-sm" onclick="openAddModal()"><i class="bi bi-plus-lg"></i>
+            เพิ่มอุปกรณ์</button>
+        </div>
+        <div class="d-flex flex-wrap gap-2 mb-3 align-items-center bg-white p-2 rounded shadow-sm">
+          <span class="text-muted small ms-1 me-2"><i class="bi bi-funnel"></i> ตัวกรอง:</span>
+          <div class="btn-group btn-group-sm filter-group" role="group">
+            <input type="radio" class="btn-check" name="btnStatusFilter" id="btnStatusAll" autocomplete="off" checked
+              onclick="setStatusFilter('all')"><label class="btn btn-outline-secondary"
+              for="btnStatusAll">ทั้งหมด</label>
+            <input type="radio" class="btn-check" name="btnStatusFilter" id="btnStatusNew" autocomplete="off"
+              onclick="setStatusFilter('ใหม่')"><label class="btn btn-outline-success"
+              for="btnStatusNew">เครื่องใหม่</label>
+            <input type="radio" class="btn-check" name="btnStatusFilter" id="btnStatusOld" autocomplete="off"
+              onclick="setStatusFilter('เก่า')"><label class="btn btn-outline-warning"
+              for="btnStatusOld">เครื่องเก่า</label>
+          </div>
+          <div class="vr mx-1 d-none d-md-block text-muted"></div>
+          <div class="dropdown">
+            <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown"
+              id="lotDropdownBtn">ทุก Lot</button>
+            <ul class="dropdown-menu shadow" id="lotFilterMenu" style="max-height: 250px; overflow-y: auto;"></ul>
+          </div>
+        </div>
+        <div id="stockFilterInfo"></div>
+        <div class="row g-3" id="stockList"></div>
+      </div>
+
+      <!-- ติดตั้งแล้ว -->
+      <div class="tab-pane fade" id="tabInstalled">
+        <div class="d-flex gap-2 mb-3">
+          <div class="input-group"><span class="input-group-text bg-white"><i
+                class="bi bi-search text-muted"></i></span><input type="text" class="form-control border-start-0 ps-0"
+              id="installedSearch" placeholder="ค้นหา สถานที่ / SN / รุ่น / Lot"></div>
+          <button class="btn btn-primary flex-shrink-0 shadow-sm" onclick="openAddInstalledModal()"><i
+              class="bi bi-plus-lg"></i> เพิ่มรายการ</button>
+        </div>
+        <div id="installedFilterInfo"></div>
+        <div class="row g-3" id="installedList"></div>
+      </div>
+
+      <!-- ประวัติ -->
+      <div class="tab-pane fade" id="tabHistory">
+        <div class="card stat-card">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+              <h5 class="mb-0"><i class="bi bi-clock-history me-2 text-primary"></i>บันทึกประวัติการทำงาน</h5>
+              <!-- ปุ่ม Export Excel -->
+              <button class="btn btn-success btn-sm shadow-sm" onclick="exportHistoryExcel()"><i
+                  class="bi bi-file-earmark-excel me-1"></i> Export Excel</button>
+            </div>
+            <!-- ช่องเลือกช่วงวันที่ -->
+            <form id="historyFilterForm" class="row g-2 align-items-end mb-3 bg-light p-2 rounded border"
+              onsubmit="searchHistoryByDate(event)">
+              <div class="col-12 col-md-auto"><label
+                  class="form-label small text-muted mb-1">ตั้งแต่วันที่</label><input type="date"
+                  class="form-control form-control-sm" id="histStart" required></div>
+              <div class="col-12 col-md-auto"><label class="form-label small text-muted mb-1">ถึงวันที่</label><input
+                  type="date" class="form-control form-control-sm" id="histEnd" required></div>
+              <div class="col-12 col-md-auto d-flex gap-2">
+                <button type="submit" class="btn btn-primary btn-sm" id="btnSearchHistory"><i class="bi bi-search"></i>
+                  ค้นหา</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="loadAll()">แสดง 20
+                  รายการล่าสุด</button>
+              </div>
+            </form>
+            <div class="table-responsive">
+              <table class="table table-sm table-hover align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th>วันที่</th>
+                    <th>สถานที่</th>
+                    <th>SN ใหม่</th>
+                    <th>Lot</th>
+                    <th>SN เก่า</th>
+                    <th>หมายเหตุ</th>
+                    <th class="text-center">รูปภาพ</th>
+                  </tr>
+                </thead>
+                <tbody id="historyBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
   </div>
-</div>
 
-<!-- โมดัลอุปกรณ์ในคลัง -->
-<div class="modal fade" id="equipmentModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered"><form class="modal-content border-0 shadow" id="equipmentForm">
-    <div class="modal-header bg-light"><h5 class="modal-title" id="equipmentModalTitle">เพิ่มอุปกรณ์</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-    <div class="modal-body">
-      <input type="hidden" id="originalSN">
-      <div class="mb-3"><label class="form-label">รุ่นอุปกรณ์ <span class="text-danger">*</span></label><input type="text" class="form-control" id="modelName" required></div>
-      <div class="mb-3"><label class="form-label">Serial Number <span class="text-danger">*</span></label><input type="text" class="form-control" id="sn" required autocomplete="off"></div>
-      <div class="mb-3"><label class="form-label">สถานะ <span class="text-danger">*</span></label><select class="form-select" id="status" required><option value="ใหม่">ใหม่</option><option value="เก่า">เก่า</option></select></div>
-      <div class="mb-1"><label class="form-label">Lot อุปกรณ์</label><input type="text" class="form-control" id="lot" list="lotSuggestions" placeholder="เช่น lot1, lot2, lot3" autocomplete="off"><datalist id="lotSuggestions"></datalist></div>
+  <!-- โมดัลอุปกรณ์ในคลัง -->
+  <div class="modal fade" id="equipmentModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <form class="modal-content border-0 shadow" id="equipmentForm">
+        <div class="modal-header bg-light">
+          <h5 class="modal-title" id="equipmentModalTitle">เพิ่มอุปกรณ์</h5><button type="button" class="btn-close"
+            data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="originalSN">
+          <div class="mb-3"><label class="form-label">รุ่นอุปกรณ์ <span class="text-danger">*</span></label><input
+              type="text" class="form-control" id="modelName" required></div>
+          <div class="mb-3"><label class="form-label">Serial Number <span class="text-danger">*</span></label><input
+              type="text" class="form-control" id="sn" required autocomplete="off"></div>
+          <div class="mb-3"><label class="form-label">สถานะ <span class="text-danger">*</span></label><select
+              class="form-select" id="status" required>
+              <option value="ใหม่">ใหม่</option>
+              <option value="เก่า">เก่า</option>
+            </select></div>
+          <div class="mb-1"><label class="form-label">Lot อุปกรณ์</label><input type="text" class="form-control"
+              id="lot" list="lotSuggestions" placeholder="เช่น lot1, lot2, lot3" autocomplete="off"><datalist
+              id="lotSuggestions"></datalist></div>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-light"
+            data-bs-dismiss="modal">ยกเลิก</button><button type="submit" class="btn btn-primary"
+            id="equipmentSaveBtn">บันทึก</button></div>
+      </form>
     </div>
-    <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">ยกเลิก</button><button type="submit" class="btn btn-primary" id="equipmentSaveBtn">บันทึก</button></div>
-  </form></div>
-</div>
+  </div>
 
-<!-- โมดัลรายการติดตั้ง -->
-<div class="modal fade" id="installedModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered"><form class="modal-content border-0 shadow" id="installedForm">
-    <div class="modal-header bg-light"><h5 class="modal-title" id="installedModalTitle">เพิ่มรายการติดตั้ง</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-    <div class="modal-body">
-      <input type="hidden" id="originalSN2">
-      <div class="mb-3"><label class="form-label">สถานที่ <span class="text-danger">*</span></label><input type="text" class="form-control" id="insLocation" required></div>
-      <div class="mb-3"><label class="form-label">Serial Number <span class="text-danger">*</span></label><input type="text" class="form-control" id="insSN" required autocomplete="off"></div>
-      <div class="mb-3"><label class="form-label">รุ่นอุปกรณ์</label><input type="text" class="form-control" id="insModel"></div>
-      <div class="mb-1"><label class="form-label">Lot อุปกรณ์</label><input type="text" class="form-control" id="insLot" list="lotSuggestions" placeholder="เช่น lot1, lot2, lot3" autocomplete="off"></div>
+  <!-- โมดัลรายการติดตั้ง -->
+  <div class="modal fade" id="installedModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <form class="modal-content border-0 shadow" id="installedForm">
+        <div class="modal-header bg-light">
+          <h5 class="modal-title" id="installedModalTitle">เพิ่มรายการติดตั้ง</h5><button type="button"
+            class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="originalSN2">
+          <div class="mb-3"><label class="form-label">สถานที่ <span class="text-danger">*</span></label><input
+              type="text" class="form-control" id="insLocation" required></div>
+          <div class="mb-3"><label class="form-label">Serial Number <span class="text-danger">*</span></label><input
+              type="text" class="form-control" id="insSN" required autocomplete="off"></div>
+          <div class="mb-3"><label class="form-label">รุ่นอุปกรณ์</label><input type="text" class="form-control"
+              id="insModel"></div>
+          <div class="mb-1"><label class="form-label">Lot อุปกรณ์</label><input type="text" class="form-control"
+              id="insLot" list="lotSuggestions" placeholder="เช่น lot1, lot2, lot3" autocomplete="off"></div>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-light"
+            data-bs-dismiss="modal">ยกเลิก</button><button type="submit" class="btn btn-primary"
+            id="installedSaveBtn">บันทึก</button></div>
+      </form>
     </div>
-    <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">ยกเลิก</button><button type="submit" class="btn btn-primary" id="installedSaveBtn">บันทึก</button></div>
-  </form></div>
-</div>
+  </div>
 
-<div class="toast-wrap" id="toastWrap"></div>
+  <div class="toast-wrap" id="toastWrap"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-/* ================= ตั้งค่า API เชื่อมต่อ Google Sheets ================= */
-const API_URL = "https://script.google.com/macros/s/AKfycbx_EBQBjtMmBOoMxh-HRU9cLA0_CC_L6wi8N6RYIuWWifDkLQAjP5SBJWlsCQWjb-EC/exec"; // 👈 เอา URL ที่ได้จาก Google Apps Script มาใส่ตรงนี้
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    /* ================= ตั้งค่า API เชื่อมต่อ Google Sheets ================= */
+    const API_URL = "https://script.google.com/macros/s/AKfycbx_EBQBjtMmBOoMxh-HRU9cLA0_CC_L6wi8N6RYIuWWifDkLQAjP5SBJWlsCQWjb-EC/exec"; // 👈 เอา URL ที่ได้จาก Google Apps Script มาใส่ตรงนี้
 
-async function callAPI(action, data = {}) {
-  try {
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action, ...data })
+    async function callAPI(action, data = {}) {
+      try {
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action, ...data })
+        });
+        const json = await response.json();
+        if (!json.success) throw new Error(json.message);
+        return json.data;
+      } catch (err) {
+        console.error("API Error:", err);
+        throw err;
+      }
+    }
+
+    /* ================= สถานะระบบหน้าเว็บ ================= */
+    let allStock = [], allInstalled = [], allLots = [], currentHistory = [];
+    let lotFilter = '', statusFilter = 'all';
+    let equipmentModal, installedModal;
+
+    document.addEventListener('DOMContentLoaded', function () {
+      equipmentModal = new bootstrap.Modal(document.getElementById('equipmentModal'));
+      installedModal = new bootstrap.Modal(document.getElementById('installedModal'));
+
+      const today = new Date();
+      document.getElementById('histEnd').value = today.toISOString().split('T')[0];
+      const lastMonth = new Date(today); lastMonth.setMonth(today.getMonth() - 1);
+      document.getElementById('histStart').value = lastMonth.toISOString().split('T')[0];
+
+      document.getElementById('stockSearch').addEventListener('input', renderStock);
+      document.getElementById('installedSearch').addEventListener('input', renderInstalled);
+      document.getElementById('equipmentForm').addEventListener('submit', saveEquipment);
+      document.getElementById('installedForm').addEventListener('submit', saveInstalled);
+      document.getElementById('swapForm').addEventListener('submit', submitSwap);
+      document.getElementById('swNewSN').addEventListener('input', showNewSNInfo);
+      document.getElementById('swOldSN').addEventListener('input', autoFillOldDevice);
+
+      loadAll();
     });
-    const json = await response.json();
-    if (!json.success) throw new Error(json.message);
-    return json.data;
-  } catch (err) {
-    console.error("API Error:", err);
-    throw err;
-  }
-}
 
-/* ================= สถานะระบบหน้าเว็บ ================= */
-let allStock = [], allInstalled = [], allLots = [], currentHistory = [];
-let lotFilter = '', statusFilter = 'all';
-let equipmentModal, installedModal;
+    function escapeHtml(s) { return (s == null ? '' : s).toString().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
+    function jsQuote(s) { return escapeHtml(s).replace(/'/g, "\\'"); }
+    function showToast(msg, ok) {
+      const el = document.createElement('div');
+      el.className = 'toast align-items-center text-white border-0 show mb-2 shadow ' + (ok ? 'bg-success' : 'bg-danger');
+      el.innerHTML = '<div class="d-flex"><div class="toast-body">' + escapeHtml(msg) + '</div><button class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div>';
+      document.getElementById('toastWrap').appendChild(el);
+      setTimeout(() => el.remove(), 4000);
+    }
+    function busy(btnId, on, label) {
+      const b = document.getElementById(btnId); if (!b) return;
+      b.disabled = on; b.innerHTML = on ? '<span class="spinner-border spinner-border-sm me-1"></span>รอสักครู่...' : label;
+    }
 
-document.addEventListener('DOMContentLoaded', function () {
-  equipmentModal = new bootstrap.Modal(document.getElementById('equipmentModal'));
-  installedModal = new bootstrap.Modal(document.getElementById('installedModal'));
-  
-  const today = new Date();
-  document.getElementById('histEnd').value = today.toISOString().split('T')[0];
-  const lastMonth = new Date(today); lastMonth.setMonth(today.getMonth() - 1);
-  document.getElementById('histStart').value = lastMonth.toISOString().split('T')[0];
+    /* ================= โหลดข้อมูลผ่าน API ================= */
+    async function loadAll() {
+      try {
+        const res = await callAPI('getAllData');
+        allStock = res.stock.items || [];
+        allInstalled = res.installed || [];
+        allLots = res.lotList || [];
+        currentHistory = res.history || [];
 
-  document.getElementById('stockSearch').addEventListener('input', renderStock);
-  document.getElementById('installedSearch').addEventListener('input', renderInstalled);
-  document.getElementById('equipmentForm').addEventListener('submit', saveEquipment);
-  document.getElementById('installedForm').addEventListener('submit', saveInstalled);
-  document.getElementById('swapForm').addEventListener('submit', submitSwap);
-  document.getElementById('swNewSN').addEventListener('input', showNewSNInfo);
-  document.getElementById('swOldSN').addEventListener('input', autoFillOldDevice);
+        renderDashboard(res);
+        renderDatalists();
+        renderLotDropdown();
+        renderStock();
+        renderInstalled();
+        renderHistory(currentHistory);
+      } catch (e) {
+        showToast('โหลดข้อมูลไม่สำเร็จ: ' + e.message, false);
+      }
+    }
 
-  loadAll();
-});
+    /* ================= ระบบ Filter ================= */
+    function setStatusFilter(status) { statusFilter = status; renderStock(); }
+    function setLotFilter(lot, event) {
+      if (event) event.preventDefault();
+      lotFilter = lot; renderLotDropdown(); renderStock(); renderInstalled();
+    }
+    function clearAllFilters() {
+      statusFilter = 'all'; lotFilter = '';
+      document.getElementById('stockSearch').value = '';
+      document.getElementById('installedSearch').value = '';
+      document.getElementById('btnStatusAll').checked = true;
+      renderLotDropdown(); renderStock(); renderInstalled();
+    }
+    function renderLotDropdown() {
+      const menu = document.getElementById('lotFilterMenu');
+      let html = '<li><a class="dropdown-item ' + (!lotFilter ? 'active fw-bold' : '') + '" href="#" onclick="setLotFilter(\'\', event)">ทุก Lot</a></li><li><hr class="dropdown-divider"></li>';
+      allLots.forEach(lot => {
+        const isActive = (lotFilter === lot) ? 'active fw-bold' : '';
+        html += `<li><a class="dropdown-item ${isActive}" href="#" onclick="setLotFilter('${jsQuote(lot)}', event)">${escapeHtml(lot)}</a></li>`;
+      });
+      menu.innerHTML = html;
+      const btn = document.getElementById('lotDropdownBtn');
+      if (lotFilter) { btn.innerHTML = `<i class="bi bi-funnel-fill"></i> Lot: ${escapeHtml(lotFilter)}`; btn.classList.replace('btn-outline-primary', 'btn-primary'); }
+      else { btn.innerHTML = `ทุก Lot`; btn.classList.replace('btn-primary', 'btn-outline-primary'); }
+    }
+    function filterByLot(lot) { setLotFilter(lot); new bootstrap.Tab(document.querySelector('[data-bs-target="#tabStock"]')).show(); }
 
-function escapeHtml(s) { return (s == null ? '' : s).toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
-function jsQuote(s) { return escapeHtml(s).replace(/'/g, "\\'"); }
-function showToast(msg, ok) {
-  const el = document.createElement('div');
-  el.className = 'toast align-items-center text-white border-0 show mb-2 shadow ' + (ok ? 'bg-success' : 'bg-danger');
-  el.innerHTML = '<div class="d-flex"><div class="toast-body">' + escapeHtml(msg) + '</div><button class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div>';
-  document.getElementById('toastWrap').appendChild(el);
-  setTimeout(() => el.remove(), 4000);
-}
-function busy(btnId, on, label) {
-  const b = document.getElementById(btnId); if (!b) return;
-  b.disabled = on; b.innerHTML = on ? '<span class="spinner-border spinner-border-sm me-1"></span>รอสักครู่...' : label;
-}
+    /* ================= ประวัติ & Export ================= */
+    async function searchHistoryByDate(e) {
+      e.preventDefault();
+      const start = document.getElementById('histStart').value;
+      const end = document.getElementById('histEnd').value;
+      if (start > end) { showToast('วันที่เริ่มต้น ต้องไม่เกินวันที่สิ้นสุด', false); return; }
 
-/* ================= โหลดข้อมูลผ่าน API ================= */
-async function loadAll() {
-  try {
-    const res = await callAPI('getAllData');
-    allStock = res.stock.items || [];
-    allInstalled = res.installed || [];
-    allLots = res.lotList || [];
-    currentHistory = res.history || [];
-    
-    renderDashboard(res);
-    renderDatalists();
-    renderLotDropdown();
-    renderStock();
-    renderInstalled();
-    renderHistory(currentHistory);
-  } catch (e) {
-    showToast('โหลดข้อมูลไม่สำเร็จ: ' + e.message, false);
-  }
-}
+      try {
+        busy('btnSearchHistory', true, 'ค้นหา');
+        const res = await callAPI('getHistoryByDateRange', { startDate: start, endDate: end });
+        currentHistory = res || [];
+        renderHistory(currentHistory);
+        showToast('ดึงข้อมูลประวัติเรียบร้อย พบ ' + currentHistory.length + ' รายการ', true);
+      } catch (err) {
+        showToast('ดึงประวัติไม่สำเร็จ: ' + err.message, false);
+      } finally {
+        busy('btnSearchHistory', false, '<i class="bi bi-search"></i> ค้นหา');
+      }
+    }
 
-/* ================= ระบบ Filter ================= */
-function setStatusFilter(status) { statusFilter = status; renderStock(); }
-function setLotFilter(lot, event) {
-  if (event) event.preventDefault();
-  lotFilter = lot; renderLotDropdown(); renderStock(); renderInstalled();
-}
-function clearAllFilters() {
-  statusFilter = 'all'; lotFilter = '';
-  document.getElementById('stockSearch').value = '';
-  document.getElementById('installedSearch').value = '';
-  document.getElementById('btnStatusAll').checked = true;
-  renderLotDropdown(); renderStock(); renderInstalled();
-}
-function renderLotDropdown() {
-  const menu = document.getElementById('lotFilterMenu');
-  let html = '<li><a class="dropdown-item ' + (!lotFilter ? 'active fw-bold' : '') + '" href="#" onclick="setLotFilter(\'\', event)">ทุก Lot</a></li><li><hr class="dropdown-divider"></li>';
-  allLots.forEach(lot => {
-    const isActive = (lotFilter === lot) ? 'active fw-bold' : '';
-    html += `<li><a class="dropdown-item ${isActive}" href="#" onclick="setLotFilter('${jsQuote(lot)}', event)">${escapeHtml(lot)}</a></li>`;
-  });
-  menu.innerHTML = html;
-  const btn = document.getElementById('lotDropdownBtn');
-  if (lotFilter) { btn.innerHTML = `<i class="bi bi-funnel-fill"></i> Lot: ${escapeHtml(lotFilter)}`; btn.classList.replace('btn-outline-primary', 'btn-primary'); } 
-  else { btn.innerHTML = `ทุก Lot`; btn.classList.replace('btn-primary', 'btn-outline-primary'); }
-}
-function filterByLot(lot) { setLotFilter(lot); new bootstrap.Tab(document.querySelector('[data-bs-target="#tabStock"]')).show(); }
-
-/* ================= ประวัติ & Export ================= */
-async function searchHistoryByDate(e) {
-  e.preventDefault();
-  const start = document.getElementById('histStart').value;
-  const end = document.getElementById('histEnd').value;
-  if(start > end) { showToast('วันที่เริ่มต้น ต้องไม่เกินวันที่สิ้นสุด', false); return; }
-
-  try {
-    busy('btnSearchHistory', true, 'ค้นหา');
-    const res = await callAPI('getHistoryByDateRange', { startDate: start, endDate: end });
-    currentHistory = res || [];
-    renderHistory(currentHistory);
-    showToast('ดึงข้อมูลประวัติเรียบร้อย พบ ' + currentHistory.length + ' รายการ', true);
-  } catch (err) {
-    showToast('ดึงประวัติไม่สำเร็จ: ' + err.message, false);
-  } finally {
-    busy('btnSearchHistory', false, '<i class="bi bi-search"></i> ค้นหา');
-  }
-}
-
-function renderHistory(rows) {
-  const body = document.getElementById('historyBody');
-  if (!rows.length) { body.innerHTML = '<tr><td colspan="6" class="empty">ไม่พบประวัติในช่วงเวลานี้</td></tr>'; return; }
-  body.innerHTML = rows.map(h => 
-    `<tr>
-      <td class="small text-nowrap">${escapeHtml(h.date)}</td>
+    function renderHistory(rows) {
+      const body = document.getElementById('historyBody');
+      if (!rows.length) { body.innerHTML = '<tr><td colspan="7" class="empty text-center text-muted">ไม่พบประวัติในช่วงเวลานี้</td></tr>'; return; }
+      body.innerHTML = rows.map(h => {
+        // ตัดเวลาออกให้เหลือแค่วันที่
+        let dateOnly = h.date ? h.date.split(' ')[0] : '-';
+        // สร้างปุ่มดูรูป
+        let imgTag = h.imageUrl ? `<a href="${h.imageUrl}" target="_blank" class="text-primary text-decoration-none small fw-bold"><i class="bi bi-image"></i> ดูรูป</a>` : '<span class="text-muted small">-</span>';
+        
+        return `<tr>
+      <td class="small text-nowrap">${escapeHtml(dateOnly)}</td>
       <td>${escapeHtml(h.location)}</td>
       <td class="text-success fw-semibold">${escapeHtml(h.newSN)}</td>
       <td><span class="badge bg-secondary-subtle text-secondary-emphasis">${escapeHtml(h.newLot || '-')}</span></td>
       <td class="text-muted">${escapeHtml(h.oldSN)}</td>
       <td class="small">${escapeHtml(h.note || '-')}</td>
+      <td class="text-center">${imgTag}</td>
     </tr>`
-  ).join('');
-}
+      }).join('');
+    }
 
-function exportHistoryExcel() {
-  if (!currentHistory || currentHistory.length === 0) { showToast('ไม่มีข้อมูลสำหรับ Export', false); return; }
-  let csvContent = '\uFEFF'; 
-  csvContent += "วันที่,สถานที่,SN ใหม่,Lot,SN เก่า,หมายเหตุ\n";
-  currentHistory.forEach(h => {
-    let row = [
-      `"${(h.date || '').replace(/"/g, '""')}"`,
-      `"${(h.location || '').replace(/"/g, '""')}"`,
-      `"${(h.newSN || '').replace(/"/g, '""')}"`,
-      `"${(h.newLot || '-').replace(/"/g, '""')}"`,
-      `"${(h.oldSN || '').replace(/"/g, '""')}"`,
-      `"${(h.note || '-').replace(/"/g, '""')}"`
-    ];
-    csvContent += row.join(",") + "\n";
-  });
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.setAttribute("href", url);
-  link.setAttribute("download", "History_Export.csv");
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-}
+    function exportHistoryExcel() {
+      if (!currentHistory || currentHistory.length === 0) { showToast('ไม่มีข้อมูลสำหรับ Export', false); return; }
+      let csvContent = '\uFEFF';
+      csvContent += "วันที่,สถานที่,SN ใหม่,Lot,SN เก่า,หมายเหตุ,ลิงก์รูปภาพ\n";
+      currentHistory.forEach(h => {
+        let dateOnly = h.date ? h.date.split(' ')[0] : '';
+        let row = [
+          `"${(dateOnly || '').replace(/"/g, '""')}"`,
+          `"${(h.location || '').replace(/"/g, '""')}"`,
+          `"${(h.newSN || '').replace(/"/g, '""')}"`,
+          `"${(h.newLot || '-').replace(/"/g, '""')}"`,
+          `"${(h.oldSN || '').replace(/"/g, '""')}"`,
+          `"${(h.note || '-').replace(/"/g, '""')}"`,
+          `"${(h.imageUrl || '').replace(/"/g, '""')}"`
+        ];
+        csvContent += row.join(",") + "\n";
+      });
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", "History_Export.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
 
-/* ================= เรนเดอร์ส่วนต่างๆ ================= */
-function renderDashboard(res) {
-  const stock = res.stock, rows = res.lotSummary || [];
-  const installedCount = (res.installed || []).length;
-  document.getElementById('statNew').textContent = stock.totalNew || 0;
-  document.getElementById('statOld').textContent = stock.totalOld || 0;
-  document.getElementById('statInstalled').textContent = installedCount;
-  document.getElementById('statTotal').textContent = (stock.items || []).length + installedCount;
-  document.getElementById('lotCount').textContent = rows.length + ' ล็อต';
-  const body = document.getElementById('lotSummaryBody'), foot = document.getElementById('lotSummaryFoot');
-  if (!rows.length) { body.innerHTML = '<tr><td colspan="6" class="empty">ยังไม่มีข้อมูลอุปกรณ์</td></tr>'; foot.innerHTML = ''; return; }
-  const grand = rows.reduce((s, r) => s + r.total, 0) || 1;
-  let sN = 0, sO = 0, sI = 0;
-  body.innerHTML = rows.map(r => {
-    sN += r.newCount; sO += r.oldCount; sI += r.installedCount;
-    const share = Math.round(r.total / grand * 100);
-    const label = r.lot === '-' ? '<span class="text-muted fst-italic">ไม่ระบุ Lot</span>' : `<span class="fw-semibold">${escapeHtml(r.lot)}</span>`;
-    return `<tr class="lot-row" onclick="filterByLot('${jsQuote(r.lot)}')">
+    function exportHistoryExcel() {
+      if (!currentHistory || currentHistory.length === 0) { showToast('ไม่มีข้อมูลสำหรับ Export', false); return; }
+      let csvContent = '\uFEFF';
+      csvContent += "วันที่,สถานที่,SN ใหม่,Lot,SN เก่า,หมายเหตุ\n";
+      currentHistory.forEach(h => {
+        let row = [
+          `"${(h.date || '').replace(/"/g, '""')}"`,
+          `"${(h.location || '').replace(/"/g, '""')}"`,
+          `"${(h.newSN || '').replace(/"/g, '""')}"`,
+          `"${(h.newLot || '-').replace(/"/g, '""')}"`,
+          `"${(h.oldSN || '').replace(/"/g, '""')}"`,
+          `"${(h.note || '-').replace(/"/g, '""')}"`
+        ];
+        csvContent += row.join(",") + "\n";
+      });
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", "History_Export.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    /* ================= เรนเดอร์ส่วนต่างๆ ================= */
+    function renderDashboard(res) {
+      const stock = res.stock, rows = res.lotSummary || [];
+      const installedCount = (res.installed || []).length;
+      document.getElementById('statNew').textContent = stock.totalNew || 0;
+      document.getElementById('statOld').textContent = stock.totalOld || 0;
+      document.getElementById('statInstalled').textContent = installedCount;
+      document.getElementById('statTotal').textContent = (stock.items || []).length + installedCount;
+      document.getElementById('lotCount').textContent = rows.length + ' ล็อต';
+      const body = document.getElementById('lotSummaryBody'), foot = document.getElementById('lotSummaryFoot');
+      if (!rows.length) { body.innerHTML = '<tr><td colspan="6" class="empty">ยังไม่มีข้อมูลอุปกรณ์</td></tr>'; foot.innerHTML = ''; return; }
+      const grand = rows.reduce((s, r) => s + r.total, 0) || 1;
+      let sN = 0, sO = 0, sI = 0;
+      body.innerHTML = rows.map(r => {
+        sN += r.newCount; sO += r.oldCount; sI += r.installedCount;
+        const share = Math.round(r.total / grand * 100);
+        const label = r.lot === '-' ? '<span class="text-muted fst-italic">ไม่ระบุ Lot</span>' : `<span class="fw-semibold">${escapeHtml(r.lot)}</span>`;
+        return `<tr class="lot-row" onclick="filterByLot('${jsQuote(r.lot)}')">
         <td>${label}</td><td class="text-center"><span class="badge bg-success-subtle text-success-emphasis">${r.newCount}</span></td>
         <td class="text-center"><span class="badge bg-warning-subtle text-warning-emphasis">${r.oldCount}</span></td>
         <td class="text-center"><span class="badge bg-primary-subtle text-primary-emphasis">${r.installedCount}</span></td>
         <td class="text-center fw-bold">${r.total}</td>
         <td>
-          <div class="bar"><div class="bg-success" style="width:${r.newCount/r.total*100}%"></div><div class="bg-warning" style="width:${r.oldCount/r.total*100}%"></div><div class="bg-primary" style="width:${r.installedCount/r.total*100}%"></div></div>
+          <div class="bar"><div class="bg-success" style="width:${r.newCount / r.total * 100}%"></div><div class="bg-warning" style="width:${r.oldCount / r.total * 100}%"></div><div class="bg-primary" style="width:${r.installedCount / r.total * 100}%"></div></div>
           <small class="text-muted">${share}% ของทั้งหมด</small>
         </td></tr>`;
-  }).join('');
-  foot.innerHTML = `<tr><td>รวมทุก Lot</td><td class="text-center text-success">${sN}</td><td class="text-center text-warning">${sO}</td><td class="text-center text-primary">${sI}</td><td class="text-center">${sN+sO+sI}</td><td></td></tr>`;
-}
+      }).join('');
+      foot.innerHTML = `<tr><td>รวมทุก Lot</td><td class="text-center text-success">${sN}</td><td class="text-center text-warning">${sO}</td><td class="text-center text-primary">${sI}</td><td class="text-center">${sN + sO + sI}</td><td></td></tr>`;
+    }
 
-function renderDatalists() {
-  document.getElementById('lotSuggestions').innerHTML = allLots.map(l => `<option value="${escapeHtml(l)}">`).join('');
-  document.getElementById('stockSNList').innerHTML = allStock.filter(i => i.status === 'ใหม่').map(i => `<option value="${escapeHtml(i.sn)}">${escapeHtml(i.model)} | Lot ${escapeHtml(i.lot)}</option>`).join('');
-  document.getElementById('installedSNList').innerHTML = allInstalled.map(i => `<option value="${escapeHtml(i.sn)}">${escapeHtml(i.location)}</option>`).join('');
-  const locs = {}; allInstalled.forEach(i => { if (i.location) locs[i.location] = true; });
-  document.getElementById('locationList').innerHTML = Object.keys(locs).map(l => `<option value="${escapeHtml(l)}">`).join('');
-}
+    function renderDatalists() {
+      document.getElementById('lotSuggestions').innerHTML = allLots.map(l => `<option value="${escapeHtml(l)}">`).join('');
+      document.getElementById('stockSNList').innerHTML = allStock.filter(i => i.status === 'ใหม่').map(i => `<option value="${escapeHtml(i.sn)}">${escapeHtml(i.model)} | Lot ${escapeHtml(i.lot)}</option>`).join('');
+      document.getElementById('installedSNList').innerHTML = allInstalled.map(i => `<option value="${escapeHtml(i.sn)}">${escapeHtml(i.location)}</option>`).join('');
+      const locs = {}; allInstalled.forEach(i => { if (i.location) locs[i.location] = true; });
+      document.getElementById('locationList').innerHTML = Object.keys(locs).map(l => `<option value="${escapeHtml(l)}">`).join('');
+    }
 
-function renderStock() {
-  const kw = document.getElementById('stockSearch').value.trim().toLowerCase();
-  const list = allStock.filter(it => {
-    if (statusFilter !== 'all' && it.status !== statusFilter) return false;
-    if (lotFilter && (it.lot || '-') !== lotFilter) return false;
-    if (!kw) return true;
-    return (it.sn || '').toLowerCase().includes(kw) || (it.model || '').toLowerCase().includes(kw) || (it.lot || '').toLowerCase().includes(kw);
-  });
-  let bannerHtml = '';
-  if (lotFilter || statusFilter !== 'all' || kw) {
-    bannerHtml = `<div class="alert alert-primary py-2 d-flex justify-content-between align-items-center mb-3"><span>พบ <b>${list.length}</b> รายการ</span><button class="btn btn-sm btn-outline-primary" onclick="clearAllFilters()">ล้างตัวกรอง</button></div>`;
-  }
-  document.getElementById('stockFilterInfo').innerHTML = bannerHtml;
-  const box = document.getElementById('stockList');
-  if (!list.length) { box.innerHTML = '<div class="col-12 empty">ไม่พบอุปกรณ์ที่ตรงเงื่อนไข</div>'; return; }
-  box.innerHTML = list.map(it => {
-    const statusClass = it.status === 'ใหม่' ? 'bg-success' : (it.status === 'เก่า' ? 'bg-warning text-dark' : 'bg-danger');
-    return `<div class="col-12 col-md-6 col-lg-4"><div class="card item-card h-100"><div class="card-body">
+    function renderStock() {
+      const kw = document.getElementById('stockSearch').value.trim().toLowerCase();
+      const list = allStock.filter(it => {
+        if (statusFilter !== 'all' && it.status !== statusFilter) return false;
+        if (lotFilter && (it.lot || '-') !== lotFilter) return false;
+        if (!kw) return true;
+        return (it.sn || '').toLowerCase().includes(kw) || (it.model || '').toLowerCase().includes(kw) || (it.lot || '').toLowerCase().includes(kw);
+      });
+      let bannerHtml = '';
+      if (lotFilter || statusFilter !== 'all' || kw) {
+        bannerHtml = `<div class="alert alert-primary py-2 d-flex justify-content-between align-items-center mb-3"><span>พบ <b>${list.length}</b> รายการ</span><button class="btn btn-sm btn-outline-primary" onclick="clearAllFilters()">ล้างตัวกรอง</button></div>`;
+      }
+      document.getElementById('stockFilterInfo').innerHTML = bannerHtml;
+      const box = document.getElementById('stockList');
+      if (!list.length) { box.innerHTML = '<div class="col-12 empty">ไม่พบอุปกรณ์ที่ตรงเงื่อนไข</div>'; return; }
+      box.innerHTML = list.map(it => {
+        const statusClass = it.status === 'ใหม่' ? 'bg-success' : (it.status === 'เก่า' ? 'bg-warning text-dark' : 'bg-danger');
+        return `<div class="col-12 col-md-6 col-lg-4"><div class="card item-card h-100"><div class="card-body">
       <div class="d-flex justify-content-between align-items-start mb-2"><h6 class="mb-0 text-truncate pe-2">${escapeHtml(it.model)}</h6><span class="badge ${statusClass}">${escapeHtml(it.status || 'ไม่ระบุ')}</span></div>
       <div class="text-muted small mb-2"><i class="bi bi-upc-scan me-1"></i>${escapeHtml(it.sn)}</div>
       <span class="badge lot-badge bg-secondary-subtle text-secondary-emphasis"><i class="bi bi-box-seam me-1"></i>${escapeHtml(it.lot || '-')}</span>
@@ -417,23 +642,23 @@ function renderStock() {
         <button class="btn btn-sm btn-outline-primary flex-fill" data-model="${escapeHtml(it.model)}" data-sn="${escapeHtml(it.sn)}" data-status="${escapeHtml(it.status)}" data-lot="${escapeHtml(it.lot || '')}" onclick="openEditModal(this)"><i class="bi bi-pencil"></i> แก้ไข</button>
         <button class="btn btn-sm btn-outline-danger" data-sn="${escapeHtml(it.sn)}" onclick="deleteEquipment(this.dataset.sn)"><i class="bi bi-trash"></i></button>
       </div></div></div></div>`;
-  }).join('');
-}
+      }).join('');
+    }
 
-function renderInstalled() {
-  const kw = document.getElementById('installedSearch').value.trim().toLowerCase();
-  const list = allInstalled.filter(it => {
-    if (lotFilter && (it.lot || '-') !== lotFilter) return false;
-    if (!kw) return true;
-    return (it.location || '').toLowerCase().includes(kw) || (it.sn || '').toLowerCase().includes(kw) || (it.model || '').toLowerCase().includes(kw) || (it.lot || '').toLowerCase().includes(kw);
-  });
-  let bannerHtml = '';
-  if (lotFilter || kw) { bannerHtml = `<div class="alert alert-primary py-2 d-flex justify-content-between align-items-center mb-3"><span>พบ <b>${list.length}</b> รายการ</span><button class="btn btn-sm btn-outline-primary" onclick="clearAllFilters()">ล้างตัวกรอง</button></div>`; }
-  document.getElementById('installedFilterInfo').innerHTML = bannerHtml;
-  const box = document.getElementById('installedList');
-  if (!list.length) { box.innerHTML = '<div class="col-12 empty">ไม่พบรายการติดตั้ง</div>'; return; }
-  box.innerHTML = list.map(it => 
-    `<div class="col-12 col-md-6 col-lg-4"><div class="card item-card h-100"><div class="card-body">
+    function renderInstalled() {
+      const kw = document.getElementById('installedSearch').value.trim().toLowerCase();
+      const list = allInstalled.filter(it => {
+        if (lotFilter && (it.lot || '-') !== lotFilter) return false;
+        if (!kw) return true;
+        return (it.location || '').toLowerCase().includes(kw) || (it.sn || '').toLowerCase().includes(kw) || (it.model || '').toLowerCase().includes(kw) || (it.lot || '').toLowerCase().includes(kw);
+      });
+      let bannerHtml = '';
+      if (lotFilter || kw) { bannerHtml = `<div class="alert alert-primary py-2 d-flex justify-content-between align-items-center mb-3"><span>พบ <b>${list.length}</b> รายการ</span><button class="btn btn-sm btn-outline-primary" onclick="clearAllFilters()">ล้างตัวกรอง</button></div>`; }
+      document.getElementById('installedFilterInfo').innerHTML = bannerHtml;
+      const box = document.getElementById('installedList');
+      if (!list.length) { box.innerHTML = '<div class="col-12 empty">ไม่พบรายการติดตั้ง</div>'; return; }
+      box.innerHTML = list.map(it =>
+        `<div class="col-12 col-md-6 col-lg-4"><div class="card item-card h-100"><div class="card-body">
       <div class="d-flex justify-content-between align-items-start mb-2"><h6 class="mb-0 text-truncate pe-2"><i class="bi bi-geo-alt text-primary me-1"></i>${escapeHtml(it.location)}</h6><span class="badge lot-badge bg-secondary-subtle text-secondary-emphasis"><i class="bi bi-box-seam me-1"></i>${escapeHtml(it.lot || '-')}</span></div>
       <div class="text-muted small"><i class="bi bi-upc-scan me-1"></i>${escapeHtml(it.sn)}</div>
       <div class="text-muted small"><i class="bi bi-cpu me-1"></i>${escapeHtml(it.model || 'ไม่ระบุรุ่น')}</div>
@@ -441,70 +666,95 @@ function renderInstalled() {
         <button class="btn btn-sm btn-outline-primary flex-fill" data-location="${escapeHtml(it.location)}" data-sn="${escapeHtml(it.sn)}" data-model="${escapeHtml(it.model || '')}" data-lot="${escapeHtml(it.lot || '')}" onclick="openEditInstalledModal(this)"><i class="bi bi-pencil"></i> แก้ไข</button>
         <button class="btn btn-sm btn-outline-danger" data-sn="${escapeHtml(it.sn)}" onclick="deleteInstalled(this.dataset.sn)"><i class="bi bi-trash"></i></button>
       </div></div></div></div>`
-  ).join('');
-}
+      ).join('');
+    }
 
-/* ================= จัดการบันทึกข้อมูลผ่าน API ================= */
-function openAddModal() { document.getElementById('equipmentForm').reset(); document.getElementById('originalSN').value = ''; document.getElementById('lot').value = (lotFilter && lotFilter !== '-') ? lotFilter : ''; if (statusFilter !== 'all') document.getElementById('status').value = statusFilter; document.getElementById('equipmentModalTitle').textContent = 'เพิ่มอุปกรณ์'; equipmentModal.show(); }
-function openEditModal(btn) { const d = btn.dataset; document.getElementById('modelName').value = d.model; document.getElementById('sn').value = d.sn; document.getElementById('status').value = d.status || 'ใหม่'; document.getElementById('lot').value = (d.lot === '-' ? '' : d.lot); document.getElementById('originalSN').value = d.sn; document.getElementById('equipmentModalTitle').textContent = 'แก้ไขอุปกรณ์'; equipmentModal.show(); }
-async function saveEquipment(e) {
-  e.preventDefault(); busy('equipmentSaveBtn', true);
-  try {
-    const payload = { modelName: document.getElementById('modelName').value, sn: document.getElementById('sn').value, status: document.getElementById('status').value, lot: document.getElementById('lot').value, originalSN: document.getElementById('originalSN').value };
-    const res = await callAPI('saveEquipment', { payload });
-    showToast(res.message, res.success); 
-    if (res.success) { equipmentModal.hide(); loadAll(); }
-  } catch (err) { showToast('บันทึกไม่สำเร็จ: ' + err.message, false); }
-  finally { busy('equipmentSaveBtn', false, 'บันทึก'); }
-}
-async function deleteEquipment(sn) {
-  if (!confirm('ยืนยันลบอุปกรณ์ SN: ' + sn + '?')) return;
-  try {
-    const res = await callAPI('deleteEquipment', { sn });
-    showToast(res.message, res.success); if (res.success) loadAll();
-  } catch (err) { showToast('ลบไม่สำเร็จ: ' + err.message, false); }
-}
+    /* ================= จัดการบันทึกข้อมูลผ่าน API ================= */
+    function openAddModal() { document.getElementById('equipmentForm').reset(); document.getElementById('originalSN').value = ''; document.getElementById('lot').value = (lotFilter && lotFilter !== '-') ? lotFilter : ''; if (statusFilter !== 'all') document.getElementById('status').value = statusFilter; document.getElementById('equipmentModalTitle').textContent = 'เพิ่มอุปกรณ์'; equipmentModal.show(); }
+    function openEditModal(btn) { const d = btn.dataset; document.getElementById('modelName').value = d.model; document.getElementById('sn').value = d.sn; document.getElementById('status').value = d.status || 'ใหม่'; document.getElementById('lot').value = (d.lot === '-' ? '' : d.lot); document.getElementById('originalSN').value = d.sn; document.getElementById('equipmentModalTitle').textContent = 'แก้ไขอุปกรณ์'; equipmentModal.show(); }
+    async function saveEquipment(e) {
+      e.preventDefault(); busy('equipmentSaveBtn', true);
+      try {
+        const payload = { modelName: document.getElementById('modelName').value, sn: document.getElementById('sn').value, status: document.getElementById('status').value, lot: document.getElementById('lot').value, originalSN: document.getElementById('originalSN').value };
+        const res = await callAPI('saveEquipment', { payload });
+        showToast(res.message, res.success);
+        if (res.success) { equipmentModal.hide(); loadAll(); }
+      } catch (err) { showToast('บันทึกไม่สำเร็จ: ' + err.message, false); }
+      finally { busy('equipmentSaveBtn', false, 'บันทึก'); }
+    }
+    async function deleteEquipment(sn) {
+      if (!confirm('ยืนยันลบอุปกรณ์ SN: ' + sn + '?')) return;
+      try {
+        const res = await callAPI('deleteEquipment', { sn });
+        showToast(res.message, res.success); if (res.success) loadAll();
+      } catch (err) { showToast('ลบไม่สำเร็จ: ' + err.message, false); }
+    }
 
-function openAddInstalledModal() { document.getElementById('installedForm').reset(); document.getElementById('originalSN2').value = ''; document.getElementById('insLot').value = (lotFilter && lotFilter !== '-') ? lotFilter : ''; document.getElementById('installedModalTitle').textContent = 'เพิ่มรายการติดตั้ง'; installedModal.show(); }
-function openEditInstalledModal(btn) { const d = btn.dataset; document.getElementById('insLocation').value = d.location; document.getElementById('insSN').value = d.sn; document.getElementById('insModel').value = d.model; document.getElementById('insLot').value = (d.lot === '-' ? '' : d.lot); document.getElementById('originalSN2').value = d.sn; document.getElementById('installedModalTitle').textContent = 'แก้ไขรายการติดตั้ง'; installedModal.show(); }
-async function saveInstalled(e) {
-  e.preventDefault(); busy('installedSaveBtn', true);
-  try {
-    const payload = { location: document.getElementById('insLocation').value, sn: document.getElementById('insSN').value, model: document.getElementById('insModel').value, lot: document.getElementById('insLot').value, originalSN: document.getElementById('originalSN2').value };
-    const res = await callAPI('saveInstalled', { payload });
-    showToast(res.message, res.success); if (res.success) { installedModal.hide(); loadAll(); }
-  } catch (err) { showToast('บันทึกไม่สำเร็จ: ' + err.message, false); }
-  finally { busy('installedSaveBtn', false, 'บันทึก'); }
-}
-async function deleteInstalled(sn) {
-  if (!confirm('ยืนยันลบรายการติดตั้ง SN: ' + sn + '?')) return;
-  try {
-    const res = await callAPI('deleteInstalled', { sn });
-    showToast(res.message, res.success); if (res.success) loadAll();
-  } catch (err) { showToast('ลบไม่สำเร็จ: ' + err.message, false); }
-}
+    function openAddInstalledModal() { document.getElementById('installedForm').reset(); document.getElementById('originalSN2').value = ''; document.getElementById('insLot').value = (lotFilter && lotFilter !== '-') ? lotFilter : ''; document.getElementById('installedModalTitle').textContent = 'เพิ่มรายการติดตั้ง'; installedModal.show(); }
+    function openEditInstalledModal(btn) { const d = btn.dataset; document.getElementById('insLocation').value = d.location; document.getElementById('insSN').value = d.sn; document.getElementById('insModel').value = d.model; document.getElementById('insLot').value = (d.lot === '-' ? '' : d.lot); document.getElementById('originalSN2').value = d.sn; document.getElementById('installedModalTitle').textContent = 'แก้ไขรายการติดตั้ง'; installedModal.show(); }
+    async function saveInstalled(e) {
+      e.preventDefault(); busy('installedSaveBtn', true);
+      try {
+        const payload = { location: document.getElementById('insLocation').value, sn: document.getElementById('insSN').value, model: document.getElementById('insModel').value, lot: document.getElementById('insLot').value, originalSN: document.getElementById('originalSN2').value };
+        const res = await callAPI('saveInstalled', { payload });
+        showToast(res.message, res.success); if (res.success) { installedModal.hide(); loadAll(); }
+      } catch (err) { showToast('บันทึกไม่สำเร็จ: ' + err.message, false); }
+      finally { busy('installedSaveBtn', false, 'บันทึก'); }
+    }
+    async function deleteInstalled(sn) {
+      if (!confirm('ยืนยันลบรายการติดตั้ง SN: ' + sn + '?')) return;
+      try {
+        const res = await callAPI('deleteInstalled', { sn });
+        showToast(res.message, res.success); if (res.success) loadAll();
+      } catch (err) { showToast('ลบไม่สำเร็จ: ' + err.message, false); }
+    }
 
-function showNewSNInfo() {
-  const v = document.getElementById('swNewSN').value.trim().toUpperCase(); const hit = allStock.filter(i => (i.sn || '').toUpperCase() === v)[0];
-  document.getElementById('swNewInfo').innerHTML = hit ? `พบในคลัง: <b>${escapeHtml(hit.model)}</b> | Lot <b>${escapeHtml(hit.lot)}</b>` : 'Lot จะถูกดึงจากคลังไปผูกกับเครื่องที่ติดตั้งอัตโนมัติ';
-}
-function autoFillOldDevice() {
-  const v = document.getElementById('swOldSN').value.trim().toUpperCase(); const hit = allInstalled.filter(i => (i.sn || '').toUpperCase() === v)[0];
-  if (!hit) return;
-  if (!document.getElementById('swLocation').value.trim()) document.getElementById('swLocation').value = hit.location;
-  if (!document.getElementById('swOldModel').value.trim()) document.getElementById('swOldModel').value = hit.model || '';
-  if (!document.getElementById('swOldLot').value.trim()) document.getElementById('swOldLot').value = (hit.lot === '-' ? '' : hit.lot);
-}
-async function submitSwap(e) {
-  e.preventDefault(); busy('swapBtn', true);
-  try {
-    const payload = { location: document.getElementById('swLocation').value, newSN: document.getElementById('swNewSN').value, oldSN: document.getElementById('swOldSN').value, oldModel: document.getElementById('swOldModel').value, oldLot: document.getElementById('swOldLot').value, note: document.getElementById('swNote').value };
-    const res = await callAPI('processSwap', { payload });
-    showToast(res.message, res.success); 
-    if (res.success) { document.getElementById('swapForm').reset(); loadAll(); }
-  } catch (err) { showToast('บันทึกไม่สำเร็จ: ' + err.message, false); }
-  finally { busy('swapBtn', false, '<i class="bi bi-save me-1"></i>บันทึกการสลับ'); }
-}
-</script>
+    function showNewSNInfo() {
+      const v = document.getElementById('swNewSN').value.trim().toUpperCase(); const hit = allStock.filter(i => (i.sn || '').toUpperCase() === v)[0];
+      document.getElementById('swNewInfo').innerHTML = hit ? `พบในคลัง: <b>${escapeHtml(hit.model)}</b> | Lot <b>${escapeHtml(hit.lot)}</b>` : 'Lot จะถูกดึงจากคลังไปผูกกับเครื่องที่ติดตั้งอัตโนมัติ';
+    }
+    function autoFillOldDevice() {
+      const v = document.getElementById('swOldSN').value.trim().toUpperCase(); const hit = allInstalled.filter(i => (i.sn || '').toUpperCase() === v)[0];
+      if (!hit) return;
+      if (!document.getElementById('swLocation').value.trim()) document.getElementById('swLocation').value = hit.location;
+      if (!document.getElementById('swOldModel').value.trim()) document.getElementById('swOldModel').value = hit.model || '';
+      if (!document.getElementById('swOldLot').value.trim()) document.getElementById('swOldLot').value = (hit.lot === '-' ? '' : hit.lot);
+    }
+    async function submitSwap(e) {
+      e.preventDefault(); busy('swapBtn', true);
+      try {
+        let imageFile = null;
+        const fileInput = document.getElementById('swImage');
+        if (fileInput && fileInput.files[0]) {
+            const file = fileInput.files[0];
+            const base64Data = await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.readAsDataURL(file);
+            });
+            imageFile = { data: base64Data, name: file.name, mimeType: file.type };
+        }
+
+        const payload = { 
+          location: document.getElementById('swLocation').value, 
+          newSN: document.getElementById('swNewSN').value, 
+          oldSN: document.getElementById('swOldSN').value, 
+          oldModel: document.getElementById('swOldModel').value, 
+          oldLot: document.getElementById('swOldLot').value, 
+          note: document.getElementById('swNote').value,
+          imageFile: imageFile // แนบรูปลงไปด้วย
+        };
+        const res = await callAPI('processSwap', { payload });
+        showToast(res.message, res.success);
+        if (res.success) { 
+          document.getElementById('swapForm').reset(); 
+          if(fileInput) fileInput.value = ''; // ล้างค่ารูปภาพ
+          loadAll(); 
+        }
+      } catch (err) { showToast('บันทึกไม่สำเร็จ: ' + err.message, false); }
+      finally { busy('swapBtn', false, '<i class="bi bi-save me-1"></i>บันทึกการสลับ'); }
+    }
+  </script>
 </body>
+
 </html>
