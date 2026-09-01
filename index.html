@@ -386,20 +386,15 @@
     /* ================= ตั้งค่า API เชื่อมต่อ Google Sheets ================= */
     const API_URL = "https://script.google.com/macros/s/AKfycbx_EBQBjtMmBOoMxh-HRU9cLA0_CC_L6wi8N6RYIuWWifDkLQAjP5SBJWlsCQWjb-EC/exec";
 
+    /* คืน object เต็มเสมอ  → save/delete อ่าน .success/.message  |  อ่านข้อมูลใช้ .data */
     async function callAPI(action, data = {}) {
-      try {
-        const response = await fetch(API_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({ action, ...data })
-        });
-        const json = await response.json();
-        if (!json.success) throw new Error(json.message);
-        return json.data;
-      } catch (err) {
-        console.error("API Error:", err);
-        throw err;
-      }
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action, ...data })
+      });
+      if (!response.ok) throw new Error('HTTP ' + response.status);
+      return await response.json();
     }
 
     /* ================= สถานะระบบหน้าเว็บ ================= */
@@ -441,11 +436,38 @@
       b.disabled = on; b.innerHTML = on ? '<span class="spinner-border spinner-border-sm me-1"></span>รอสักครู่...' : label;
     }
 
+    /* ย่อรูป + แปลงเป็นรูปแบบที่ Code.gs รับได้ {data, mimeType, name} */
+    function readImageFile(input, maxW, quality) {
+      return new Promise(resolve => {
+        const f = input && input.files && input.files[0];
+        if (!f) return resolve(null);
+        const fr = new FileReader();
+        fr.onload = () => {
+          const img = new Image();
+          img.onload = () => {
+            const scale = Math.min(1, (maxW || 1280) / img.width);
+            const c = document.createElement('canvas');
+            c.width = Math.round(img.width * scale);
+            c.height = Math.round(img.height * scale);
+            c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+            const url = c.toDataURL('image/jpeg', quality || 0.7);
+            resolve({ data: url.split(',')[1], mimeType: 'image/jpeg', name: (f.name || 'img') + '.jpg' });
+          };
+          img.onerror = () => resolve(null);
+          img.src = fr.result;
+        };
+        fr.readAsDataURL(f);
+      });
+    }
+
     /* ================= โหลดข้อมูลผ่าน API ================= */
     async function loadAll() {
       try {
-        const res = await callAPI('getAllData');
-        allStock = res.stock.items || [];
+        const r = await callAPI('getAllData');
+        if (!r.success) throw new Error(r.message || 'โหลดข้อมูลไม่สำเร็จ');
+        const res = r.data;
+
+        allStock = (res.stock && res.stock.items) || [];
         allInstalled = res.installed || [];
         allLots = res.lotList || [];
         currentHistory = res.history || [];
@@ -580,7 +602,7 @@
     }
 
     function openAddModal() {
-      if (!verifyAdminPassword()) return; // เช็ครหัสผ่านก่อนเปิดฟอร์มเพิ่ม
+      if (!verifyAdminPassword()) return;
 
       const form = document.getElementById('equipmentForm');
       if (form) form.reset();
@@ -590,12 +612,11 @@
       if (imgInput) imgInput.value = '';
       const titleEl = document.getElementById('equipmentModalTitle');
       if (titleEl) titleEl.textContent = 'เพิ่มอุปกรณ์';
-      if (typeof equipmentModal !== 'undefined') {
-        equipmentModal.show();
-      }
+      if (typeof equipmentModal !== 'undefined') equipmentModal.show();
     }
+
     function openEditModal(btn) {
-      if (!verifyAdminPassword()) return; // เช็ครหัสผ่านก่อนเปิดฟอร์มแก้ไข
+      if (!verifyAdminPassword()) return;
 
       const model = btn.getAttribute('data-model');
       const sn = btn.getAttribute('data-sn');
@@ -615,39 +636,22 @@
       const titleEl = document.getElementById('equipmentModalTitle');
       if (titleEl) titleEl.textContent = 'แก้ไขอุปกรณ์';
 
-      if (typeof equipmentModal !== 'undefined') {
-        equipmentModal.show();
-      }
-    }
-
-    // ฟังก์ชันแปลงไฟล์ภาพเป็น Base64
-    function convertFileToBase64(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = error => reject(error);
-      });
+      if (typeof equipmentModal !== 'undefined') equipmentModal.show();
     }
 
     async function saveEquipment(e) {
       e.preventDefault();
       busy('equipmentSaveBtn', true, 'บันทึก');
       try {
-        const fileInput = document.getElementById('equipmentImage');
-        let imageBase64 = '';
-        if (fileInput && fileInput.files && fileInput.files[0]) {
-          imageBase64 = await convertFileToBase64(fileInput.files[0]);
-        }
-
         const payload = {
+          modelName: document.getElementById('modelName').value,   // ชื่อ key ตรงกับ Code.gs
           sn: document.getElementById('sn').value,
-          model: document.getElementById('modelName').value,
           status: document.getElementById('status').value,
           lot: document.getElementById('lot').value,
-          originalSN: document.getElementById('originalSN').value,
-          image: imageBase64
+          originalSN: document.getElementById('originalSN').value
         };
+        const img = await readImageFile(document.getElementById('equipmentImage'), 1280, 0.7);
+        if (img) payload.imageFile = img;
 
         const res = await callAPI('saveEquipment', { payload });
         showToast(res.message, res.success);
@@ -663,7 +667,7 @@
     }
 
     async function deleteEquipment(sn) {
-      if (!verifyAdminPassword()) return; // เช็ครหัสผ่านก่อนลบ
+      if (!verifyAdminPassword()) return;
       if (!confirm('ยืนยันลบอุปกรณ์ SN: ' + sn + '?')) return;
       try {
         const res = await callAPI('deleteEquipment', { sn });
@@ -699,7 +703,7 @@
     }
 
     async function deleteInstalled(sn) {
-      if (!verifyAdminPassword()) return; // เช็ครหัสผ่านก่อนลบรายการติดตั้ง
+      if (!verifyAdminPassword()) return;
       if (!confirm('ยืนยันลบรายการติดตั้ง SN: ' + sn + '?')) return;
       try {
         const res = await callAPI('deleteInstalled', { sn });
@@ -709,10 +713,9 @@
         showToast('ลบไม่สำเร็จ: ' + err.message, false);
       }
     }
+
     async function submitSwap(e) {
       e.preventDefault();
-
-      // เช็ครหัสผ่านก่อนกดบันทึกการสลับอุปกรณ์
       if (!verifyAdminPassword()) return;
 
       busy('swapBtn', true, '<i class="bi bi-save me-1"></i>บันทึกการสลับ');
@@ -761,8 +764,9 @@
 
       try {
         busy('btnSearchHistory', true, '<i class="bi bi-search"></i> ค้นหา');
-        const res = await callAPI('getHistoryByDateRange', { startDate: start, endDate: end });
-        currentHistory = res || [];
+        const r = await callAPI('getHistoryByDateRange', { startDate: start, endDate: end });
+        if (!r.success) throw new Error(r.message || 'ดึงประวัติไม่สำเร็จ');
+        currentHistory = r.data || [];
         renderHistory(currentHistory);
         showToast('ดึงข้อมูลประวัติเรียบร้อย พบ ' + currentHistory.length + ' รายการ', true);
       } catch (err) {
@@ -792,23 +796,34 @@
       }).join('');
     }
 
+    /* ================= Export ประวัติเป็นไฟล์เปิดด้วย Excel ================= */
+    function exportHistoryExcel() {
+      if (!currentHistory.length) { showToast('ยังไม่มีข้อมูลประวัติให้ export', false); return; }
+      const head = ['วันที่', 'สถานที่', 'SN ใหม่', 'รุ่นใหม่', 'Lot ใหม่', 'SN เก่า', 'รุ่นเก่า', 'หมายเหตุ'];
+      const rows = currentHistory.map(h => [h.date, h.location, h.newSN, h.newModel, h.newLot, h.oldSN, h.oldModel, h.note]);
+      const csv = [head].concat(rows)
+        .map(r => r.map(c => '"' + String(c == null ? '' : c).replace(/"/g, '""') + '"').join(','))
+        .join('\r\n');
+      const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'history_' + new Date().toISOString().slice(0, 10) + '.csv';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(a.href);
+      showToast('Export สำเร็จ ' + currentHistory.length + ' รายการ', true);
+    }
+
     /* ================= ฟังก์ชันตรวจสอบรหัสผ่านกลาง ================= */
     function verifyAdminPassword() {
       const pwd = prompt('กรุณากรอกรหัสผ่านเพื่อยืนยันการทำรายการ:');
-      if (pwd === null) {
-        return false; // กดยกเลิก
-      }
-      // * กำหนดรหัสผ่านตรงนี้ (สามารถเปลี่ยน '1234' เป็นรหัสที่ต้องการได้เลยครับ) *
-      if (pwd === '1234') {
-        return true;
-      } else {
-        alert('รหัสผ่านไม่ถูกต้อง! ไม่อนุญาตให้ทำรายการ');
-        return false;
-      }
+      if (pwd === null) return false;
+      if (pwd === '1234') return true;
+      alert('รหัสผ่านไม่ถูกต้อง! ไม่อนุญาตให้ทำรายการ');
+      return false;
     }
 
     function openAddInstalledModal() {
-      if (!verifyAdminPassword()) return; // เช็ครหัสผ่านก่อนเปิดเพิ่มรายการติดตั้ง
+      if (!verifyAdminPassword()) return;
 
       const form = document.getElementById('installedForm');
       if (form) form.reset();
@@ -816,13 +831,11 @@
       if (originalSN2) originalSN2.value = '';
       const titleEl = document.getElementById('installedModalTitle');
       if (titleEl) titleEl.textContent = 'เพิ่มรายการติดตั้ง';
-      if (typeof installedModal !== 'undefined') {
-        installedModal.show();
-      }
+      if (typeof installedModal !== 'undefined') installedModal.show();
     }
 
     function openEditInstalledModal(btn) {
-      if (!verifyAdminPassword()) return; // เช็ครหัสผ่านก่อนแก้ไขรายการติดตั้ง
+      if (!verifyAdminPassword()) return;
 
       const location = btn.getAttribute('data-location');
       const sn = btn.getAttribute('data-sn');
@@ -840,9 +853,7 @@
       const titleEl = document.getElementById('installedModalTitle');
       if (titleEl) titleEl.textContent = 'แก้ไขรายการติดตั้ง';
 
-      if (typeof installedModal !== 'undefined') {
-        installedModal.show();
-      }
+      if (typeof installedModal !== 'undefined') installedModal.show();
     }
 
   </script>
