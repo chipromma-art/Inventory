@@ -216,6 +216,10 @@
               <div class="col-md-4"><label class="form-label">Lot เครื่องเก่า</label><input type="text"
                   class="form-control" id="swOldLot" list="lotSuggestions" placeholder="เว้นว่าง = ดึงอัตโนมัติ"
                   autocomplete="off"></div>
+              <div class="col-12"><label class="form-label">รูปเครื่องที่ติดตั้ง (ถ้ามี)</label><input type="file"
+                  class="form-control" id="swImage" accept="image/*">
+                <div class="form-text">แนบรูปตอนติดตั้งหน้างาน จะถูกเก็บไว้กับรายการนี้ในประวัติและอุปกรณ์ที่ติดตั้งอยู่</div>
+              </div>
               <div class="col-12"><label class="form-label">หมายเหตุ</label><textarea class="form-control" id="swNote"
                   rows="2"></textarea></div>
               <div class="col-12"><button class="btn btn-primary" type="submit" id="swapBtn"><i
@@ -343,7 +347,7 @@
           <!-- เพิ่มช่องสำหรับอัปโหลดรูปภาพอุปกรณ์ -->
           <div class="mb-1"><label class="form-label">รูปภาพอุปกรณ์</label><input type="file" class="form-control"
               id="equipmentImage" accept="image/*">
-            <div class="form-text">รองรับไฟล์ภาพ (ถ้ามี)</div>
+            <div class="form-text" id="equipmentImageHint">รองรับไฟล์ภาพ (ถ้ามี)</div>
           </div>
         </div>
         <div class="modal-footer"><button type="button" class="btn btn-light"
@@ -371,6 +375,10 @@
               id="insModel"></div>
           <div class="mb-1"><label class="form-label">Lot อุปกรณ์</label><input type="text" class="form-control"
               id="insLot" list="lotSuggestions" placeholder="เช่น lot1, lot2, lot3" autocomplete="off"></div>
+          <div class="mb-1"><label class="form-label">รูปภาพอุปกรณ์</label><input type="file" class="form-control"
+              id="installedImage" accept="image/*">
+            <div class="form-text" id="installedImageHint">รองรับไฟล์ภาพ (ถ้ามี) — เว้นว่างไว้เพื่อคงรูปเดิม</div>
+          </div>
         </div>
         <div class="modal-footer"><button type="button" class="btn btn-light"
             data-bs-dismiss="modal">ยกเลิก</button><button type="submit" class="btn btn-primary"
@@ -565,9 +573,12 @@
       if (!list.length) { box.innerHTML = '<div class="col-12 empty">ไม่พบอุปกรณ์ที่ตรงเงื่อนไข</div>'; return; }
       box.innerHTML = list.map(it => {
         const statusClass = it.status === 'ใหม่' ? 'bg-success' : (it.status === 'เก่า' ? 'bg-warning text-dark' : 'bg-danger');
-        let imgBadge = it.image ? `<span class="badge bg-info-subtle text-info-emphasis ms-1"><i class="bi bi-image"></i> มีรูป</span>` : '';
+        let thumb = it.image
+          ? `<a href="${escapeHtml(it.image)}" target="_blank" rel="noopener" class="d-block mb-2"><img src="${escapeHtml(it.image)}" style="width:100%;height:110px;object-fit:cover;border-radius:8px;" alt="รูปอุปกรณ์"></a>`
+          : '';
         return `<div class="col-12 col-md-6 col-lg-4"><div class="card item-card h-100"><div class="card-body">
-      <div class="d-flex justify-content-between align-items-start mb-2"><h6 class="mb-0 text-truncate pe-2">${escapeHtml(it.model)} ${imgBadge}</h6><span class="badge ${statusClass}">${escapeHtml(it.status || 'ไม่ระบุ')}</span></div>
+      ${thumb}
+      <div class="d-flex justify-content-between align-items-start mb-2"><h6 class="mb-0 text-truncate pe-2">${escapeHtml(it.model)}</h6><span class="badge ${statusClass}">${escapeHtml(it.status || 'ไม่ระบุ')}</span></div>
       <div class="text-muted small mb-2"><i class="bi bi-upc-scan me-1"></i>${escapeHtml(it.sn)}</div>
       <span class="badge lot-badge bg-secondary-subtle text-secondary-emphasis"><i class="bi bi-box-seam me-1"></i>${escapeHtml(it.lot || '-')}</span>
       <div class="mt-3 d-flex gap-2">
@@ -590,12 +601,16 @@
       const box = document.getElementById('installedList');
       if (!list.length) { box.innerHTML = '<div class="col-12 empty">ไม่พบรายการติดตั้ง</div>'; return; }
       box.innerHTML = list.map(it => {
+        let thumb = it.imageUrl
+          ? `<a href="${escapeHtml(it.imageUrl)}" target="_blank" rel="noopener" class="d-block mb-2"><img src="${escapeHtml(it.imageUrl)}" style="width:100%;height:110px;object-fit:cover;border-radius:8px;" alt="รูปอุปกรณ์"></a>`
+          : '';
         return `<div class="col-12 col-md-6 col-lg-4"><div class="card item-card h-100"><div class="card-body">
+  ${thumb}
   <div class="d-flex justify-content-between align-items-start mb-2"><h6 class="mb-0 text-truncate pe-2"><i class="bi bi-geo-alt text-primary me-1"></i>${escapeHtml(it.location)}</h6><span class="badge lot-badge bg-secondary-subtle text-secondary-emphasis"><i class="bi bi-box-seam me-1"></i>${escapeHtml(it.lot || '-')}</span></div>
   <div class="text-muted small"><i class="bi bi-upc-scan me-1"></i>${escapeHtml(it.sn)}</div>
   <div class="text-muted small"><i class="bi bi-cpu me-1"></i>${escapeHtml(it.model || 'ไม่ระบุรุ่น')}</div>
   <div class="mt-3 d-flex gap-2">
-    <button class="btn btn-sm btn-outline-primary flex-fill" data-location="${escapeHtml(it.location)}" data-sn="${escapeHtml(it.sn)}" data-model="${escapeHtml(it.model || '')}" data-lot="${escapeHtml(it.lot || '')}" onclick="openEditInstalledModal(this)"><i class="bi bi-pencil"></i> แก้ไข</button>
+    <button class="btn btn-sm btn-outline-primary flex-fill" data-location="${escapeHtml(it.location)}" data-sn="${escapeHtml(it.sn)}" data-model="${escapeHtml(it.model || '')}" data-lot="${escapeHtml(it.lot || '')}" data-image="${escapeHtml(it.imageUrl || '')}" onclick="openEditInstalledModal(this)"><i class="bi bi-pencil"></i> แก้ไข</button>
     <button class="btn btn-sm btn-outline-danger" data-sn="${escapeHtml(it.sn)}" onclick="deleteInstalled(this.dataset.sn)"><i class="bi bi-trash"></i></button>
   </div></div></div></div>`;
       }).join('');
@@ -610,6 +625,8 @@
       if (originalSN) originalSN.value = '';
       const imgInput = document.getElementById('equipmentImage');
       if (imgInput) imgInput.value = '';
+      const hintEl = document.getElementById('equipmentImageHint');
+      if (hintEl) hintEl.textContent = 'รองรับไฟล์ภาพ (ถ้ามี)';
       const titleEl = document.getElementById('equipmentModalTitle');
       if (titleEl) titleEl.textContent = 'เพิ่มอุปกรณ์';
       if (typeof equipmentModal !== 'undefined') equipmentModal.show();
@@ -622,6 +639,7 @@
       const sn = btn.getAttribute('data-sn');
       const status = btn.getAttribute('data-status');
       const lot = btn.getAttribute('data-lot');
+      const image = btn.getAttribute('data-image');
 
       document.getElementById('modelName').value = model || '';
       document.getElementById('sn').value = sn || '';
@@ -630,8 +648,14 @@
 
       const orig = document.getElementById('originalSN');
       if (orig) orig.value = sn || '';
-      const imgInput = document.getElementById('equipmentImage');
-      if (imgInput) imgInput.value = '';
+      const imgInput2 = document.getElementById('equipmentImage');
+      if (imgInput2) imgInput2.value = '';
+      const hintEl2 = document.getElementById('equipmentImageHint');
+      if (hintEl2) {
+        hintEl2.innerHTML = image
+          ? 'มีรูปอยู่แล้ว — <a href="' + escapeHtml(image) + '" target="_blank" rel="noopener">ดูรูปเดิม</a> (เว้นว่างไว้เพื่อคงรูปเดิม หรือเลือกไฟล์ใหม่เพื่อแทนที่)'
+          : 'รองรับไฟล์ภาพ (ถ้ามี)';
+      }
 
       const titleEl = document.getElementById('equipmentModalTitle');
       if (titleEl) titleEl.textContent = 'แก้ไขอุปกรณ์';
@@ -689,6 +713,9 @@
           lot: document.getElementById('insLot').value,
           originalSN: document.getElementById('originalSN2').value
         };
+        const img = await readImageFile(document.getElementById('installedImage'), 1280, 0.7);
+        if (img) payload.imageFile = img;
+
         const res = await callAPI('saveInstalled', { payload });
         showToast(res.message, res.success);
         if (res.success) {
@@ -728,6 +755,9 @@
           oldLot: document.getElementById('swOldLot').value,
           note: document.getElementById('swNote').value
         };
+        const img = await readImageFile(document.getElementById('swImage'), 1280, 0.7);
+        if (img) payload.imageFile = img;
+
         const res = await callAPI('processSwap', { payload });
         showToast(res.message, res.success);
         if (res.success) {
@@ -785,10 +815,13 @@
       }
       body.innerHTML = rows.map(h => {
         let dateOnly = h.date ? h.date.split(' ')[0] : '-';
+        let photoLink = h.imageUrl
+          ? ` <a href="${escapeHtml(h.imageUrl)}" target="_blank" rel="noopener" title="ดูรูปหน้างาน"><i class="bi bi-camera-fill text-primary"></i></a>`
+          : '';
         return `<tr>
           <td class="small text-nowrap">${escapeHtml(dateOnly)}</td>
           <td>${escapeHtml(h.location)}</td>
-          <td class="text-success fw-semibold">${escapeHtml(h.newSN)}</td>
+          <td class="text-success fw-semibold">${escapeHtml(h.newSN)}${photoLink}</td>
           <td><span class="badge bg-secondary-subtle text-secondary-emphasis">${escapeHtml(h.newLot || '-')}</span></td>
           <td class="text-muted">${escapeHtml(h.oldSN)}</td>
           <td class="small">${escapeHtml(h.note || '-')}</td>
@@ -829,6 +862,10 @@
       if (form) form.reset();
       const originalSN2 = document.getElementById('originalSN2');
       if (originalSN2) originalSN2.value = '';
+      const imgInput = document.getElementById('installedImage');
+      if (imgInput) imgInput.value = '';
+      const hintEl = document.getElementById('installedImageHint');
+      if (hintEl) hintEl.textContent = 'รองรับไฟล์ภาพ (ถ้ามี)';
       const titleEl = document.getElementById('installedModalTitle');
       if (titleEl) titleEl.textContent = 'เพิ่มรายการติดตั้ง';
       if (typeof installedModal !== 'undefined') installedModal.show();
@@ -841,6 +878,7 @@
       const sn = btn.getAttribute('data-sn');
       const model = btn.getAttribute('data-model');
       const lot = btn.getAttribute('data-lot');
+      const image = btn.getAttribute('data-image');
 
       document.getElementById('insLocation').value = location || '';
       document.getElementById('insSN').value = sn || '';
@@ -849,6 +887,14 @@
 
       const orig = document.getElementById('originalSN2');
       if (orig) orig.value = sn || '';
+      const imgInput = document.getElementById('installedImage');
+      if (imgInput) imgInput.value = '';
+      const hintEl = document.getElementById('installedImageHint');
+      if (hintEl) {
+        hintEl.innerHTML = image
+          ? 'มีรูปอยู่แล้ว — <a href="' + escapeHtml(image) + '" target="_blank" rel="noopener">ดูรูปเดิม</a> (เว้นว่างไว้เพื่อคงรูปเดิม หรือเลือกไฟล์ใหม่เพื่อแทนที่)'
+          : 'รองรับไฟล์ภาพ (ถ้ามี)';
+      }
 
       const titleEl = document.getElementById('installedModalTitle');
       if (titleEl) titleEl.textContent = 'แก้ไขรายการติดตั้ง';
