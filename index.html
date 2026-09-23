@@ -208,9 +208,23 @@
                   list="stockSNList" autocomplete="off" required><datalist id="stockSNList"></datalist>
                 <div class="form-text" id="swNewInfo">Lot จะถูกดึงจากคลังไปผูกกับเครื่องที่ติดตั้งอัตโนมัติ</div>
               </div>
-              <div class="col-md-4"><label class="form-label">SN เครื่องเก่าที่ถอดออก <span
-                    class="text-danger">*</span></label><input type="text" class="form-control" id="swOldSN"
-                  list="installedSNList" autocomplete="off" required><datalist id="installedSNList"></datalist></div>
+              <div class="col-12 d-none" id="swNewStockWrap">
+                <div class="row g-2 p-2 border rounded bg-light-subtle">
+                  <div class="col-md-6">
+                    <label class="form-label small mb-1">รุ่นเครื่องใหม่ (เพิ่มเข้าคลังพร้อมการติดตั้งนี้) <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control form-control-sm" id="swNewModel" placeholder="เช่น Huawei EchoLife HG8145V5">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label small mb-1">Lot เครื่องใหม่</label>
+                    <input type="text" class="form-control form-control-sm" id="swNewLot" list="lotSuggestions" placeholder="เว้นว่างได้" autocomplete="off">
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4"><label class="form-label">SN เครื่องเก่าที่ถอดออก</label><input type="text"
+                  class="form-control" id="swOldSN"
+                  list="installedSNList" autocomplete="off"><datalist id="installedSNList"></datalist>
+                <div class="form-text">เว้นว่างได้ ถ้าเป็นการติดตั้งใหม่ที่ไม่มีเครื่องเก่าให้ถอด</div>
+              </div>
               <div class="col-md-4"><label class="form-label">รุ่นเครื่องเก่า</label><input type="text"
                   class="form-control" id="swOldModel" placeholder="ไม่ระบุรุ่น"></div>
               <div class="col-md-4"><label class="form-label">Lot เครื่องเก่า</label><input type="text"
@@ -755,6 +769,10 @@
           oldLot: document.getElementById('swOldLot').value,
           note: document.getElementById('swNote').value
         };
+        if (!document.getElementById('swNewStockWrap').classList.contains('d-none')) {
+          payload.newModel = document.getElementById('swNewModel').value;
+          payload.newLot = document.getElementById('swNewLot').value;
+        }
         const img = await readImageFile(document.getElementById('swImage'), 1280, 0.7);
         if (img) payload.imageFile = img;
 
@@ -762,6 +780,7 @@
         showToast(res.message, res.success);
         if (res.success) {
           document.getElementById('swapForm').reset();
+          showNewSNInfo(); // รีเซ็ตให้ซ่อนช่อง "เพิ่มเข้าคลัง" และเลิกบังคับกรอกรุ่นกลับไปเป็นค่าเริ่มต้น
           loadAll();
         }
       } catch (err) {
@@ -774,7 +793,21 @@
     function showNewSNInfo() {
       const v = document.getElementById('swNewSN').value.trim().toUpperCase();
       const hit = allStock.filter(i => (i.sn || '').toUpperCase() === v)[0];
-      document.getElementById('swNewInfo').innerHTML = hit ? `พบในคลัง: <b>${escapeHtml(hit.model)}</b> | Lot <b>${escapeHtml(hit.lot)}</b>` : 'Lot จะถูกดึงจากคลังไปผูกกับเครื่องที่ติดตั้งอัตโนมัติ';
+      const wrap = document.getElementById('swNewStockWrap');
+      const modelField = document.getElementById('swNewModel');
+      if (hit) {
+        document.getElementById('swNewInfo').innerHTML = `พบในคลัง: <b>${escapeHtml(hit.model)}</b> | Lot <b>${escapeHtml(hit.lot)}</b>`;
+        wrap.classList.add('d-none');
+        modelField.required = false;
+      } else if (v) {
+        document.getElementById('swNewInfo').innerHTML = '<span class="text-warning"><i class="bi bi-exclamation-triangle-fill me-1"></i>ไม่พบ SN นี้ในคลัง — กรอกรุ่นด้านล่างเพื่อเพิ่มเข้าคลังพร้อมการติดตั้งนี้เลย</span>';
+        wrap.classList.remove('d-none');
+        modelField.required = true;
+      } else {
+        document.getElementById('swNewInfo').textContent = 'Lot จะถูกดึงจากคลังไปผูกกับเครื่องที่ติดตั้งอัตโนมัติ';
+        wrap.classList.add('d-none');
+        modelField.required = false;
+      }
     }
 
     function autoFillOldDevice() {
@@ -818,12 +851,15 @@
         let photoLink = h.imageUrl
           ? ` <a href="${escapeHtml(h.imageUrl)}" target="_blank" rel="noopener" title="ดูรูปหน้างาน"><i class="bi bi-camera-fill text-primary"></i></a>`
           : '';
+        let oldSNCell = h.oldSN
+          ? escapeHtml(h.oldSN)
+          : '<span class="fst-italic text-muted">— (ติดตั้งใหม่ ไม่มีเครื่องเก่า)</span>';
         return `<tr>
           <td class="small text-nowrap">${escapeHtml(dateOnly)}</td>
           <td>${escapeHtml(h.location)}</td>
           <td class="text-success fw-semibold">${escapeHtml(h.newSN)}${photoLink}</td>
           <td><span class="badge bg-secondary-subtle text-secondary-emphasis">${escapeHtml(h.newLot || '-')}</span></td>
-          <td class="text-muted">${escapeHtml(h.oldSN)}</td>
+          <td class="text-muted">${oldSNCell}</td>
           <td class="small">${escapeHtml(h.note || '-')}</td>
         </tr>`
       }).join('');
