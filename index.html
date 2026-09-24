@@ -144,7 +144,7 @@
           <div class="col-6 col-lg-3">
             <div class="card stat-card h-100">
               <div class="card-body">
-                <div class="text-muted small">เครื่องเก่าในคลัง</div>
+                <div class="text-muted small">รอส่งคืน</div>
                 <div class="stat-num text-warning" id="statOld">0</div>
               </div>
             </div>
@@ -180,7 +180,7 @@
                   <tr>
                     <th>Lot</th>
                     <th class="text-center" style="width:96px">คลัง (ใหม่)</th>
-                    <th class="text-center" style="width:96px">คลัง (เก่า)</th>
+                    <th class="text-center" style="width:96px">รอส่งคืน</th>
                     <th class="text-center" style="width:110px">ติดตั้งอยู่</th>
                     <th class="text-center" style="width:80px">รวม</th>
                     <th style="width:26%">สัดส่วน</th>
@@ -210,11 +210,15 @@
               </div>
               <div class="col-12 d-none" id="swNewStockWrap">
                 <div class="row g-2 p-2 border rounded bg-light-subtle">
-                  <div class="col-md-6">
+                  <div class="col-md-4">
                     <label class="form-label small mb-1">รุ่นเครื่องใหม่ (เพิ่มเข้าคลังพร้อมการติดตั้งนี้) <span class="text-danger">*</span></label>
                     <input type="text" class="form-control form-control-sm" id="swNewModel" placeholder="เช่น Huawei EchoLife HG8145V5">
                   </div>
-                  <div class="col-md-6">
+                  <div class="col-md-4">
+                    <label class="form-label small mb-1">ประเภทอุปกรณ์</label>
+                    <input type="text" class="form-control form-control-sm" id="swNewType" list="typeSuggestions" placeholder="เช่น โมเด็ม, เราเตอร์" autocomplete="off">
+                  </div>
+                  <div class="col-md-4">
                     <label class="form-label small mb-1">Lot เครื่องใหม่</label>
                     <input type="text" class="form-control form-control-sm" id="swNewLot" list="lotSuggestions" placeholder="เว้นว่างได้" autocomplete="off">
                   </div>
@@ -248,7 +252,7 @@
         <div class="d-flex gap-2 mb-2">
           <div class="input-group"><span class="input-group-text bg-white"><i
                 class="bi bi-search text-muted"></i></span><input type="text" class="form-control border-start-0 ps-0"
-              id="stockSearch" placeholder="ค้นหา SN / รุ่น / Lot"></div>
+              id="stockSearch" placeholder="ค้นหา SN / รุ่น / ประเภท / Lot"></div>
           <button class="btn btn-primary flex-shrink-0 shadow-sm" onclick="openAddModal()"><i class="bi bi-plus-lg"></i>
             เพิ่มอุปกรณ์</button>
         </div>
@@ -262,8 +266,11 @@
               onclick="setStatusFilter('ใหม่')"><label class="btn btn-outline-success"
               for="btnStatusNew">เครื่องใหม่</label>
             <input type="radio" class="btn-check" name="btnStatusFilter" id="btnStatusOld" autocomplete="off"
-              onclick="setStatusFilter('เก่า')"><label class="btn btn-outline-warning"
-              for="btnStatusOld">เครื่องเก่า</label>
+              onclick="setStatusFilter('รอส่งคืน')"><label class="btn btn-outline-warning"
+              for="btnStatusOld">รอส่งคืน</label>
+            <input type="radio" class="btn-check" name="btnStatusFilter" id="btnStatusReturned" autocomplete="off"
+              onclick="setStatusFilter('ส่งคืนแล้ว')"><label class="btn btn-outline-secondary"
+              for="btnStatusReturned">ส่งคืนแล้ว</label>
           </div>
           <div class="vr mx-1 d-none d-md-block text-muted"></div>
           <div class="dropdown">
@@ -271,9 +278,29 @@
               id="lotDropdownBtn">ทุก Lot</button>
             <ul class="dropdown-menu shadow" id="lotFilterMenu" style="max-height: 250px; overflow-y: auto;"></ul>
           </div>
+          <div class="dropdown">
+            <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown"
+              id="typeDropdownBtn">ทุกประเภท</button>
+            <ul class="dropdown-menu shadow" id="typeFilterMenu" style="max-height: 250px; overflow-y: auto;"></ul>
+          </div>
         </div>
         <div id="stockFilterInfo"></div>
-        <div class="row g-3" id="stockList"></div>
+        <div class="table-responsive bg-white rounded shadow-sm">
+          <table class="table table-sm table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th style="width:56px"></th>
+                <th>รุ่น / SN</th>
+                <th>ประเภท</th>
+                <th>สถานะ</th>
+                <th>Lot</th>
+                <th class="text-end" style="width:160px">จัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="stockList"></tbody>
+          </table>
+        </div>
+        <nav class="mt-2"><ul class="pagination pagination-sm justify-content-center mb-0" id="stockPager"></ul></nav>
       </div>
 
       <!-- ติดตั้งแล้ว -->
@@ -281,12 +308,40 @@
         <div class="d-flex gap-2 mb-3">
           <div class="input-group"><span class="input-group-text bg-white"><i
                 class="bi bi-search text-muted"></i></span><input type="text" class="form-control border-start-0 ps-0"
-              id="installedSearch" placeholder="ค้นหา สถานที่ / SN / รุ่น / Lot"></div>
+              id="installedSearch" placeholder="ค้นหา สถานที่ / SN / รุ่น / ประเภท / Lot"></div>
           <button class="btn btn-primary flex-shrink-0 shadow-sm" onclick="openAddInstalledModal()"><i
               class="bi bi-plus-lg"></i> เพิ่มรายการ</button>
         </div>
+        <div class="d-flex flex-wrap gap-2 mb-3 align-items-center bg-white p-2 rounded shadow-sm">
+          <span class="text-muted small ms-1 me-2"><i class="bi bi-funnel"></i> ตัวกรอง:</span>
+          <div class="dropdown">
+            <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown"
+              id="lotDropdownBtnIns">ทุก Lot</button>
+            <ul class="dropdown-menu shadow" id="lotFilterMenuIns" style="max-height: 250px; overflow-y: auto;"></ul>
+          </div>
+          <div class="dropdown">
+            <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown"
+              id="typeDropdownBtnIns">ทุกประเภท</button>
+            <ul class="dropdown-menu shadow" id="typeFilterMenuIns" style="max-height: 250px; overflow-y: auto;"></ul>
+          </div>
+        </div>
         <div id="installedFilterInfo"></div>
-        <div class="row g-3" id="installedList"></div>
+        <div class="table-responsive bg-white rounded shadow-sm">
+          <table class="table table-sm table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th style="width:56px"></th>
+                <th>สถานที่</th>
+                <th>SN / รุ่น</th>
+                <th>ประเภท</th>
+                <th>Lot</th>
+                <th class="text-end" style="width:120px">จัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="installedList"></tbody>
+          </table>
+        </div>
+        <nav class="mt-2"><ul class="pagination pagination-sm justify-content-center mb-0" id="installedPager"></ul></nav>
       </div>
 
       <!-- ประวัติ -->
@@ -353,8 +408,12 @@
           <div class="mb-3"><label class="form-label">สถานะ <span class="text-danger">*</span></label><select
               class="form-select" id="status" required>
               <option value="ใหม่">ใหม่</option>
-              <option value="เก่า">เก่า</option>
+              <option value="รอส่งคืน">รอส่งคืน</option>
+              <option value="ส่งคืนแล้ว">ส่งคืนแล้ว</option>
             </select></div>
+          <div class="mb-3"><label class="form-label">ประเภทอุปกรณ์</label><input type="text" class="form-control"
+              id="type" list="typeSuggestions" placeholder="เช่น โมเด็ม, เราเตอร์, สวิตช์" autocomplete="off"><datalist
+              id="typeSuggestions"></datalist></div>
           <div class="mb-3"><label class="form-label">Lot อุปกรณ์</label><input type="text" class="form-control"
               id="lot" list="lotSuggestions" placeholder="เช่น lot1, lot2, lot3" autocomplete="off"><datalist
               id="lotSuggestions"></datalist></div>
@@ -387,6 +446,8 @@
               type="text" class="form-control" id="insSN" required autocomplete="off"></div>
           <div class="mb-3"><label class="form-label">รุ่นอุปกรณ์</label><input type="text" class="form-control"
               id="insModel"></div>
+          <div class="mb-3"><label class="form-label">ประเภทอุปกรณ์</label><input type="text" class="form-control"
+              id="insType" list="typeSuggestions" placeholder="เช่น โมเด็ม, เราเตอร์, สวิตช์" autocomplete="off"></div>
           <div class="mb-1"><label class="form-label">Lot อุปกรณ์</label><input type="text" class="form-control"
               id="insLot" list="lotSuggestions" placeholder="เช่น lot1, lot2, lot3" autocomplete="off"></div>
           <div class="mb-1"><label class="form-label">รูปภาพอุปกรณ์</label><input type="file" class="form-control"
@@ -420,8 +481,11 @@
     }
 
     /* ================= สถานะระบบหน้าเว็บ ================= */
-    let allStock = [], allInstalled = [], allLots = [], currentHistory = [];
-    let lotFilter = '', statusFilter = 'all';
+    let allStock = [], allInstalled = [], allLots = [], allTypes = [], currentHistory = [];
+    let lotFilter = '', statusFilter = 'all', typeFilter = '';
+    let lotFilterIns = '', typeFilterIns = '';
+    let stockPage = 1, installedPage = 1;
+    const PAGE_SIZE = 25; // จำนวนรายการต่อหน้า กันเรนเดอร์ DOM เยอะเกินไปตอนของมีหลักร้อย
     let equipmentModal, installedModal;
 
     document.addEventListener('DOMContentLoaded', function () {
@@ -445,7 +509,6 @@
     });
 
     function escapeHtml(s) { return (s == null ? '' : s).toString().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
-    function jsQuote(s) { return escapeHtml(s).replace(/'/g, "\\'"); }
     function showToast(msg, ok) {
       const el = document.createElement('div');
       el.className = 'toast align-items-center text-white border-0 show mb-2 shadow ' + (ok ? 'bg-success' : 'bg-danger');
@@ -492,11 +555,15 @@
         allStock = (res.stock && res.stock.items) || [];
         allInstalled = res.installed || [];
         allLots = res.lotList || [];
+        allTypes = res.typeList || [];
         currentHistory = res.history || [];
 
         renderDashboard(res);
         renderDatalists();
         renderLotDropdown();
+        renderTypeDropdown();
+        renderLotDropdownIns();
+        renderTypeDropdownIns();
         renderStock();
         renderInstalled();
         renderHistory(currentHistory);
@@ -506,30 +573,47 @@
     }
 
     /* ================= ระบบ Filter ================= */
-    function setStatusFilter(status) { statusFilter = status; renderStock(); }
-    function setLotFilter(lot, event) {
-      if (event) event.preventDefault();
-      lotFilter = lot; renderLotDropdown(); renderStock(); renderInstalled();
-    }
+    function setStatusFilter(status) { statusFilter = status; stockPage = 1; renderStock(); }
+    function setLotFilter(lot) { lotFilter = lot; stockPage = 1; renderLotDropdown(); renderStock(); }
+    function setTypeFilter(type) { typeFilter = type; stockPage = 1; renderTypeDropdown(); renderStock(); }
+    function setLotFilterIns(lot) { lotFilterIns = lot; installedPage = 1; renderLotDropdownIns(); renderInstalled(); }
+    function setTypeFilterIns(type) { typeFilterIns = type; installedPage = 1; renderTypeDropdownIns(); renderInstalled(); }
+
     function clearAllFilters() {
-      statusFilter = 'all'; lotFilter = '';
+      statusFilter = 'all'; lotFilter = ''; typeFilter = '';
+      lotFilterIns = ''; typeFilterIns = '';
+      stockPage = 1; installedPage = 1;
       document.getElementById('stockSearch').value = '';
       document.getElementById('installedSearch').value = '';
       document.getElementById('btnStatusAll').checked = true;
-      renderLotDropdown(); renderStock(); renderInstalled();
+      renderLotDropdown(); renderTypeDropdown();
+      renderLotDropdownIns(); renderTypeDropdownIns();
+      renderStock(); renderInstalled();
     }
-    function renderLotDropdown() {
-      const menu = document.getElementById('lotFilterMenu');
-      let html = '<li><a class="dropdown-item ' + (!lotFilter ? 'active fw-bold' : '') + '" href="#" onclick="setLotFilter(\'\', event)">ทุก Lot</a></li><li><hr class="dropdown-divider"></li>';
-      allLots.forEach(lot => {
-        const isActive = (lotFilter === lot) ? 'active fw-bold' : '';
-        html += `<li><a class="dropdown-item ${isActive}" href="#" onclick="setLotFilter('${jsQuote(lot)}', event)">${escapeHtml(lot)}</a></li>`;
-      });
+
+    // ตัวช่วยกลางสำหรับสร้างเมนู dropdown ตัวกรอง (Lot/ประเภท) ทั้ง 4 อัน
+    // ใช้ data-value + addEventListener แทนการฝังค่าลง onclick ตรงๆ เพื่อกัน Lot/ประเภทที่มีเครื่องหมาย ' ทำให้ปุ่มพัง
+    function renderFilterDropdown_(menuId, btnId, values, current, allLabel, prefixLabel, onSelect) {
+      const menu = document.getElementById(menuId);
+      let html = `<li><a class="dropdown-item ${!current ? 'active fw-bold' : ''}" href="#" data-value="">${allLabel}</a></li><li><hr class="dropdown-divider"></li>`;
+      html += values.map(v => `<li><a class="dropdown-item ${current === v ? 'active fw-bold' : ''}" href="#" data-value="${escapeHtml(v)}">${escapeHtml(v)}</a></li>`).join('');
       menu.innerHTML = html;
-      const btn = document.getElementById('lotDropdownBtn');
-      if (lotFilter) { btn.innerHTML = `<i class="bi bi-funnel-fill"></i> Lot: ${escapeHtml(lotFilter)}`; btn.classList.replace('btn-outline-primary', 'btn-primary'); }
-      else { btn.innerHTML = `ทุก Lot`; btn.classList.replace('btn-primary', 'btn-outline-primary'); }
+      menu.querySelectorAll('.dropdown-item').forEach(a => {
+        a.addEventListener('click', function (ev) {
+          ev.preventDefault();
+          onSelect(this.getAttribute('data-value'));
+        });
+      });
+      const btn = document.getElementById(btnId);
+      if (current) { btn.innerHTML = `<i class="bi bi-funnel-fill"></i> ${prefixLabel}: ${escapeHtml(current)}`; btn.classList.replace('btn-outline-primary', 'btn-primary'); }
+      else { btn.innerHTML = allLabel; btn.classList.replace('btn-primary', 'btn-outline-primary'); }
     }
+
+    function renderLotDropdown() { renderFilterDropdown_('lotFilterMenu', 'lotDropdownBtn', allLots, lotFilter, 'ทุก Lot', 'Lot', setLotFilter); }
+    function renderTypeDropdown() { renderFilterDropdown_('typeFilterMenu', 'typeDropdownBtn', allTypes, typeFilter, 'ทุกประเภท', 'ประเภท', setTypeFilter); }
+    function renderLotDropdownIns() { renderFilterDropdown_('lotFilterMenuIns', 'lotDropdownBtnIns', allLots, lotFilterIns, 'ทุก Lot', 'Lot', setLotFilterIns); }
+    function renderTypeDropdownIns() { renderFilterDropdown_('typeFilterMenuIns', 'typeDropdownBtnIns', allTypes, typeFilterIns, 'ทุกประเภท', 'ประเภท', setTypeFilterIns); }
+
     function filterByLot(lot) { setLotFilter(lot); new bootstrap.Tab(document.querySelector('[data-bs-target="#tabStock"]')).show(); }
 
     /* ================= เรนเดอร์ส่วนต่างๆ ================= */
@@ -537,7 +621,7 @@
       const stock = res.stock, rows = res.lotSummary || [];
       const installedCount = (res.installed || []).length;
       document.getElementById('statNew').textContent = stock.totalNew || 0;
-      document.getElementById('statOld').textContent = stock.totalOld || 0;
+      document.getElementById('statOld').textContent = stock.totalPending || 0;
       document.getElementById('statInstalled').textContent = installedCount;
       document.getElementById('statTotal').textContent = (stock.items || []).length + installedCount;
       document.getElementById('lotCount').textContent = rows.length + ' ล็อต';
@@ -546,88 +630,172 @@
       const grand = rows.reduce((s, r) => s + r.total, 0) || 1;
       let sN = 0, sO = 0, sI = 0;
       body.innerHTML = rows.map(r => {
-        sN += r.newCount; sO += r.oldCount; sI += r.installedCount;
+        sN += r.newCount; sO += r.pendingCount; sI += r.installedCount;
         const share = Math.round(r.total / grand * 100);
         const label = r.lot === '-' ? '<span class="text-muted fst-italic">ไม่ระบุ Lot</span>' : `<span class="fw-semibold">${escapeHtml(r.lot)}</span>`;
-        return `<tr class="lot-row" onclick="filterByLot('${jsQuote(r.lot)}')">
+        return `<tr class="lot-row" data-lot="${escapeHtml(r.lot)}">
         <td>${label}</td><td class="text-center"><span class="badge bg-success-subtle text-success-emphasis">${r.newCount}</span></td>
-        <td class="text-center"><span class="badge bg-warning-subtle text-warning-emphasis">${r.oldCount}</span></td>
+        <td class="text-center"><span class="badge bg-warning-subtle text-warning-emphasis">${r.pendingCount}</span></td>
         <td class="text-center"><span class="badge bg-primary-subtle text-primary-emphasis">${r.installedCount}</span></td>
         <td class="text-center fw-bold">${r.total}</td>
         <td>
-          <div class="bar"><div class="bg-success" style="width:${r.newCount / r.total * 100}%"></div><div class="bg-warning" style="width:${r.oldCount / r.total * 100}%"></div><div class="bg-primary" style="width:${r.installedCount / r.total * 100}%"></div></div>
+          <div class="bar"><div class="bg-success" style="width:${r.newCount / r.total * 100}%"></div><div class="bg-warning" style="width:${r.pendingCount / r.total * 100}%"></div><div class="bg-primary" style="width:${r.installedCount / r.total * 100}%"></div></div>
           <small class="text-muted">${share}% ของทั้งหมด</small>
         </tr>`;
       }).join('');
       foot.innerHTML = `<tr><td>รวมทุก Lot</td><td class="text-center text-success">${sN}</td><td class="text-center text-warning">${sO}</td><td class="text-center text-primary">${sI}</td><td class="text-center">${sN + sO + sI}</td><td></td></tr>`;
+      body.querySelectorAll('.lot-row').forEach(row => {
+        row.addEventListener('click', function () { filterByLot(this.getAttribute('data-lot')); });
+      });
     }
 
     function renderDatalists() {
       document.getElementById('lotSuggestions').innerHTML = allLots.map(l => `<option value="${escapeHtml(l)}">`).join('');
+      document.getElementById('typeSuggestions').innerHTML = allTypes.map(t => `<option value="${escapeHtml(t)}">`).join('');
       document.getElementById('stockSNList').innerHTML = allStock.filter(i => i.status === 'ใหม่').map(i => `<option value="${escapeHtml(i.sn)}">${escapeHtml(i.model)} | Lot ${escapeHtml(i.lot)}</option>`).join('');
       document.getElementById('installedSNList').innerHTML = allInstalled.map(i => `<option value="${escapeHtml(i.sn)}">${escapeHtml(i.location)}</option>`).join('');
       const locs = {}; allInstalled.forEach(i => { if (i.location) locs[i.location] = true; });
       document.getElementById('locationList').innerHTML = Object.keys(locs).map(l => `<option value="${escapeHtml(l)}">`).join('');
     }
 
+    function isPendingReturnClient_(status) { return status === 'รอส่งคืน' || status === 'เก่า'; }
+
     function renderStock() {
       const kw = document.getElementById('stockSearch').value.trim().toLowerCase();
       const list = allStock.filter(it => {
-        if (statusFilter !== 'all' && it.status !== statusFilter) return false;
+        if (statusFilter !== 'all') {
+          if (statusFilter === 'รอส่งคืน') { if (!isPendingReturnClient_(it.status)) return false; }
+          else if (it.status !== statusFilter) return false;
+        }
         if (lotFilter && (it.lot || '-') !== lotFilter) return false;
+        if (typeFilter && (it.type || '-') !== typeFilter) return false;
         if (!kw) return true;
-        return (it.sn || '').toLowerCase().includes(kw) || (it.model || '').toLowerCase().includes(kw) || (it.lot || '').toLowerCase().includes(kw);
+        return (it.sn || '').toLowerCase().includes(kw) || (it.model || '').toLowerCase().includes(kw)
+          || (it.lot || '').toLowerCase().includes(kw) || (it.type || '').toLowerCase().includes(kw);
       });
+
       let bannerHtml = '';
-      if (lotFilter || statusFilter !== 'all' || kw) {
+      if (lotFilter || typeFilter || statusFilter !== 'all' || kw) {
         bannerHtml = `<div class="alert alert-primary py-2 d-flex justify-content-between align-items-center mb-3"><span>พบ <b>${list.length}</b> รายการ</span><button class="btn btn-sm btn-outline-primary" onclick="clearAllFilters()">ล้างตัวกรอง</button></div>`;
       }
       document.getElementById('stockFilterInfo').innerHTML = bannerHtml;
+
       const box = document.getElementById('stockList');
-      if (!list.length) { box.innerHTML = '<div class="col-12 empty">ไม่พบอุปกรณ์ที่ตรงเงื่อนไข</div>'; return; }
-      box.innerHTML = list.map(it => {
-        const statusClass = it.status === 'ใหม่' ? 'bg-success' : (it.status === 'เก่า' ? 'bg-warning text-dark' : 'bg-danger');
-        let thumb = it.image
-          ? `<a href="${escapeHtml(it.image)}" target="_blank" rel="noopener" class="d-block mb-2"><img src="${escapeHtml(it.image)}" style="width:100%;height:110px;object-fit:cover;border-radius:8px;" alt="รูปอุปกรณ์"></a>`
+      if (!list.length) { box.innerHTML = '<tr><td colspan="6" class="empty">ไม่พบอุปกรณ์ที่ตรงเงื่อนไข</td></tr>'; renderStockPager(0); return; }
+
+      const totalPages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
+      if (stockPage > totalPages) stockPage = totalPages;
+      const start = (stockPage - 1) * PAGE_SIZE;
+
+      box.innerHTML = list.slice(start, start + PAGE_SIZE).map(it => {
+        const isPending = isPendingReturnClient_(it.status);
+        const statusClass = it.status === 'ใหม่' ? 'bg-success' : (it.status === 'ส่งคืนแล้ว' ? 'bg-secondary' : 'bg-warning text-dark');
+        const statusLabel = isPending ? 'รอส่งคืน' : (it.status || 'ไม่ระบุ');
+        const thumb = it.image
+          ? `<a href="${escapeHtml(it.image)}" target="_blank" rel="noopener"><img src="${escapeHtml(it.image)}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;" alt="รูปอุปกรณ์"></a>`
+          : `<div class="d-flex align-items-center justify-content-center bg-light text-muted" style="width:40px;height:40px;border-radius:6px;"><i class="bi bi-image"></i></div>`;
+        const returnBtn = isPending
+          ? `<button class="btn btn-outline-success" data-sn="${escapeHtml(it.sn)}" onclick="markReturned(this.dataset.sn)" title="ยืนยันว่าส่งคืนแล้ว"><i class="bi bi-check2-circle"></i></button>`
           : '';
-        return `<div class="col-12 col-md-6 col-lg-4"><div class="card item-card h-100"><div class="card-body">
-      ${thumb}
-      <div class="d-flex justify-content-between align-items-start mb-2"><h6 class="mb-0 text-truncate pe-2">${escapeHtml(it.model)}</h6><span class="badge ${statusClass}">${escapeHtml(it.status || 'ไม่ระบุ')}</span></div>
-      <div class="text-muted small mb-2"><i class="bi bi-upc-scan me-1"></i>${escapeHtml(it.sn)}</div>
-      <span class="badge lot-badge bg-secondary-subtle text-secondary-emphasis"><i class="bi bi-box-seam me-1"></i>${escapeHtml(it.lot || '-')}</span>
-      <div class="mt-3 d-flex gap-2">
-        <button class="btn btn-sm btn-outline-primary flex-fill" data-model="${escapeHtml(it.model)}" data-sn="${escapeHtml(it.sn)}" data-status="${escapeHtml(it.status)}" data-lot="${escapeHtml(it.lot || '')}" data-image="${escapeHtml(it.image || '')}" onclick="openEditModal(this)"><i class="bi bi-pencil"></i> แก้ไข</button>
-        <button class="btn btn-sm btn-outline-danger" data-sn="${escapeHtml(it.sn)}" onclick="deleteEquipment(this.dataset.sn)"><i class="bi bi-trash"></i></button>
-      </div></div></div></div>`;
+        return `<tr>
+          <td>${thumb}</td>
+          <td><div class="fw-semibold">${escapeHtml(it.model)}</div><div class="text-muted small"><i class="bi bi-upc-scan me-1"></i>${escapeHtml(it.sn)}</div></td>
+          <td>${it.type && it.type !== '-' ? escapeHtml(it.type) : '<span class="text-muted">-</span>'}</td>
+          <td><span class="badge ${statusClass}">${escapeHtml(statusLabel)}</span></td>
+          <td><span class="badge lot-badge bg-secondary-subtle text-secondary-emphasis">${escapeHtml(it.lot || '-')}</span></td>
+          <td class="text-end"><div class="btn-group btn-group-sm">
+            ${returnBtn}
+            <button class="btn btn-outline-primary" data-model="${escapeHtml(it.model)}" data-sn="${escapeHtml(it.sn)}" data-status="${escapeHtml(it.status)}" data-lot="${escapeHtml(it.lot || '')}" data-type="${escapeHtml(it.type || '')}" data-image="${escapeHtml(it.image || '')}" onclick="openEditModal(this)"><i class="bi bi-pencil"></i></button>
+            <button class="btn btn-outline-danger" data-sn="${escapeHtml(it.sn)}" onclick="deleteEquipment(this.dataset.sn)"><i class="bi bi-trash"></i></button>
+          </div></td>
+        </tr>`;
       }).join('');
+
+      renderStockPager(list.length);
     }
+
+    function renderStockPager(totalItems) { renderPager_('stockPager', totalItems, stockPage, p => { stockPage = p; renderStock(); }); }
 
     function renderInstalled() {
       const kw = document.getElementById('installedSearch').value.trim().toLowerCase();
       const list = allInstalled.filter(it => {
-        if (lotFilter && (it.lot || '-') !== lotFilter) return false;
+        if (lotFilterIns && (it.lot || '-') !== lotFilterIns) return false;
+        if (typeFilterIns && (it.type || '-') !== typeFilterIns) return false;
         if (!kw) return true;
-        return (it.location || '').toLowerCase().includes(kw) || (it.sn || '').toLowerCase().includes(kw) || (it.model || '').toLowerCase().includes(kw) || (it.lot || '').toLowerCase().includes(kw);
+        return (it.location || '').toLowerCase().includes(kw) || (it.sn || '').toLowerCase().includes(kw)
+          || (it.model || '').toLowerCase().includes(kw) || (it.lot || '').toLowerCase().includes(kw)
+          || (it.type || '').toLowerCase().includes(kw);
       });
+
       let bannerHtml = '';
-      if (lotFilter || kw) { bannerHtml = `<div class="alert alert-primary py-2 d-flex justify-content-between align-items-center mb-3"><span>พบ <b>${list.length}</b> รายการ</span><button class="btn btn-sm btn-outline-primary" onclick="clearAllFilters()">ล้างตัวกรอง</button></div>`; }
+      if (lotFilterIns || typeFilterIns || kw) {
+        bannerHtml = `<div class="alert alert-primary py-2 d-flex justify-content-between align-items-center mb-3"><span>พบ <b>${list.length}</b> รายการ</span><button class="btn btn-sm btn-outline-primary" onclick="clearAllFilters()">ล้างตัวกรอง</button></div>`;
+      }
       document.getElementById('installedFilterInfo').innerHTML = bannerHtml;
+
       const box = document.getElementById('installedList');
-      if (!list.length) { box.innerHTML = '<div class="col-12 empty">ไม่พบรายการติดตั้ง</div>'; return; }
-      box.innerHTML = list.map(it => {
-        let thumb = it.imageUrl
-          ? `<a href="${escapeHtml(it.imageUrl)}" target="_blank" rel="noopener" class="d-block mb-2"><img src="${escapeHtml(it.imageUrl)}" style="width:100%;height:110px;object-fit:cover;border-radius:8px;" alt="รูปอุปกรณ์"></a>`
-          : '';
-        return `<div class="col-12 col-md-6 col-lg-4"><div class="card item-card h-100"><div class="card-body">
-  ${thumb}
-  <div class="d-flex justify-content-between align-items-start mb-2"><h6 class="mb-0 text-truncate pe-2"><i class="bi bi-geo-alt text-primary me-1"></i>${escapeHtml(it.location)}</h6><span class="badge lot-badge bg-secondary-subtle text-secondary-emphasis"><i class="bi bi-box-seam me-1"></i>${escapeHtml(it.lot || '-')}</span></div>
-  <div class="text-muted small"><i class="bi bi-upc-scan me-1"></i>${escapeHtml(it.sn)}</div>
-  <div class="text-muted small"><i class="bi bi-cpu me-1"></i>${escapeHtml(it.model || 'ไม่ระบุรุ่น')}</div>
-  <div class="mt-3 d-flex gap-2">
-    <button class="btn btn-sm btn-outline-primary flex-fill" data-location="${escapeHtml(it.location)}" data-sn="${escapeHtml(it.sn)}" data-model="${escapeHtml(it.model || '')}" data-lot="${escapeHtml(it.lot || '')}" data-image="${escapeHtml(it.imageUrl || '')}" onclick="openEditInstalledModal(this)"><i class="bi bi-pencil"></i> แก้ไข</button>
-    <button class="btn btn-sm btn-outline-danger" data-sn="${escapeHtml(it.sn)}" onclick="deleteInstalled(this.dataset.sn)"><i class="bi bi-trash"></i></button>
-  </div></div></div></div>`;
+      if (!list.length) { box.innerHTML = '<tr><td colspan="6" class="empty">ไม่พบรายการติดตั้ง</td></tr>'; renderInstalledPager(0); return; }
+
+      const totalPages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
+      if (installedPage > totalPages) installedPage = totalPages;
+      const start = (installedPage - 1) * PAGE_SIZE;
+
+      box.innerHTML = list.slice(start, start + PAGE_SIZE).map(it => {
+        const thumb = it.imageUrl
+          ? `<a href="${escapeHtml(it.imageUrl)}" target="_blank" rel="noopener"><img src="${escapeHtml(it.imageUrl)}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;" alt="รูปอุปกรณ์"></a>`
+          : `<div class="d-flex align-items-center justify-content-center bg-light text-muted" style="width:40px;height:40px;border-radius:6px;"><i class="bi bi-image"></i></div>`;
+        return `<tr>
+          <td>${thumb}</td>
+          <td><i class="bi bi-geo-alt text-primary me-1"></i>${escapeHtml(it.location)}</td>
+          <td><div class="fw-semibold">${escapeHtml(it.model || 'ไม่ระบุรุ่น')}</div><div class="text-muted small"><i class="bi bi-upc-scan me-1"></i>${escapeHtml(it.sn)}</div></td>
+          <td>${it.type && it.type !== '-' ? escapeHtml(it.type) : '<span class="text-muted">-</span>'}</td>
+          <td><span class="badge lot-badge bg-secondary-subtle text-secondary-emphasis">${escapeHtml(it.lot || '-')}</span></td>
+          <td class="text-end"><div class="btn-group btn-group-sm">
+            <button class="btn btn-outline-primary" data-location="${escapeHtml(it.location)}" data-sn="${escapeHtml(it.sn)}" data-model="${escapeHtml(it.model || '')}" data-lot="${escapeHtml(it.lot || '')}" data-type="${escapeHtml(it.type || '')}" data-image="${escapeHtml(it.imageUrl || '')}" onclick="openEditInstalledModal(this)"><i class="bi bi-pencil"></i></button>
+            <button class="btn btn-outline-danger" data-sn="${escapeHtml(it.sn)}" onclick="deleteInstalled(this.dataset.sn)"><i class="bi bi-trash"></i></button>
+          </div></td>
+        </tr>`;
       }).join('');
+
+      renderInstalledPager(list.length);
+    }
+
+    function renderInstalledPager(totalItems) { renderPager_('installedPager', totalItems, installedPage, p => { installedPage = p; renderInstalled(); }); }
+
+    /* ตัวช่วยกลางสำหรับสร้างแถบเลขหน้า ใช้ร่วมกันทั้งตารางสต๊อกและตารางติดตั้งแล้ว */
+    function renderPager_(elId, totalItems, currentPage, onGoToPage) {
+      const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+      const pager = document.getElementById(elId);
+      if (totalPages <= 1) { pager.innerHTML = ''; return; }
+      let html = `<li class="page-item ${currentPage === 1 ? 'disabled' : ''}"><a class="page-link" href="#" data-page="${currentPage - 1}">‹</a></li>`;
+      for (let p = 1; p <= totalPages; p++) {
+        if (totalPages > 9 && Math.abs(p - currentPage) > 3 && p !== 1 && p !== totalPages) {
+          if (p === 2 || p === totalPages - 1) html += `<li class="page-item disabled"><span class="page-link">…</span></li>`;
+          continue;
+        }
+        html += `<li class="page-item ${p === currentPage ? 'active' : ''}"><a class="page-link" href="#" data-page="${p}">${p}</a></li>`;
+      }
+      html += `<li class="page-item ${currentPage === totalPages ? 'disabled' : ''}"><a class="page-link" href="#" data-page="${currentPage + 1}">›</a></li>`;
+      pager.innerHTML = html;
+      pager.querySelectorAll('a.page-link').forEach(a => {
+        a.addEventListener('click', function (ev) {
+          ev.preventDefault();
+          const p = parseInt(this.getAttribute('data-page'), 10);
+          if (!isNaN(p) && p >= 1 && p <= totalPages) onGoToPage(p);
+        });
+      });
+    }
+
+    async function markReturned(sn) {
+      if (!verifyAdminPassword()) return;
+      if (!confirm('ยืนยันว่าส่งคืนอุปกรณ์ SN: ' + sn + ' เรียบร้อยแล้ว?')) return;
+      try {
+        const res = await callAPI('markReturned', { sn });
+        showToast(res.message, res.success);
+        if (res.success) loadAll();
+      } catch (err) {
+        showToast('บันทึกไม่สำเร็จ: ' + err.message, false);
+      }
     }
 
     function openAddModal() {
@@ -653,12 +821,14 @@
       const sn = btn.getAttribute('data-sn');
       const status = btn.getAttribute('data-status');
       const lot = btn.getAttribute('data-lot');
+      const type = btn.getAttribute('data-type');
       const image = btn.getAttribute('data-image');
 
       document.getElementById('modelName').value = model || '';
       document.getElementById('sn').value = sn || '';
       document.getElementById('status').value = status || 'ใหม่';
       document.getElementById('lot').value = (lot === '-' ? '' : lot);
+      document.getElementById('type').value = (type === '-' ? '' : type);
 
       const orig = document.getElementById('originalSN');
       if (orig) orig.value = sn || '';
@@ -686,6 +856,7 @@
           sn: document.getElementById('sn').value,
           status: document.getElementById('status').value,
           lot: document.getElementById('lot').value,
+          type: document.getElementById('type').value,
           originalSN: document.getElementById('originalSN').value
         };
         const img = await readImageFile(document.getElementById('equipmentImage'), 1280, 0.7);
@@ -725,6 +896,7 @@
           sn: document.getElementById('insSN').value,
           model: document.getElementById('insModel').value,
           lot: document.getElementById('insLot').value,
+          type: document.getElementById('insType').value,
           originalSN: document.getElementById('originalSN2').value
         };
         const img = await readImageFile(document.getElementById('installedImage'), 1280, 0.7);
@@ -914,12 +1086,14 @@
       const sn = btn.getAttribute('data-sn');
       const model = btn.getAttribute('data-model');
       const lot = btn.getAttribute('data-lot');
+      const type = btn.getAttribute('data-type');
       const image = btn.getAttribute('data-image');
 
       document.getElementById('insLocation').value = location || '';
       document.getElementById('insSN').value = sn || '';
       document.getElementById('insModel').value = model || '';
       document.getElementById('insLot').value = (lot === '-' ? '' : lot);
+      document.getElementById('insType').value = (type === '-' ? '' : type);
 
       const orig = document.getElementById('originalSN2');
       if (orig) orig.value = sn || '';
