@@ -253,10 +253,14 @@
           <div class="card-body">
             <h5 class="mb-3"><i class="bi bi-arrow-left-right me-2 text-primary"></i>บันทึกการสลับอุปกรณ์</h5>
             <form id="swapForm" class="row g-3">
-              <div class="col-md-6"><label class="form-label">สถานที่ติดตั้ง <span
+              <div class="col-md-4"><label class="form-label">วันที่ติดตั้ง</label><input type="date"
+                  class="form-control" id="swDate">
+                <div class="form-text">เว้นว่าง = ใช้วันที่ปัจจุบัน</div>
+              </div>
+              <div class="col-md-4"><label class="form-label">สถานที่ติดตั้ง <span
                     class="text-danger">*</span></label><input type="text" class="form-control" id="swLocation"
                   list="locationList" autocomplete="off" required><datalist id="locationList"></datalist></div>
-              <div class="col-md-6"><label class="form-label">SN เครื่องใหม่ (จากคลัง) <span
+              <div class="col-md-4"><label class="form-label">SN เครื่องใหม่ (จากคลัง) <span
                     class="text-danger">*</span></label><input type="text" class="form-control" id="swNewSN"
                   list="stockSNList" autocomplete="off" required><datalist id="stockSNList"></datalist>
                 <div class="form-text" id="swNewInfo">Lot จะถูกดึงจากคลังไปผูกกับเครื่องที่ติดตั้งอัตโนมัติ</div>
@@ -577,6 +581,7 @@
       document.getElementById('histEnd').value = today.toISOString().split('T')[0];
       const lastMonth = new Date(today); lastMonth.setMonth(today.getMonth() - 1);
       document.getElementById('histStart').value = lastMonth.toISOString().split('T')[0];
+      document.getElementById('swDate').value = today.toISOString().split('T')[0];
 
       document.getElementById('stockSearch').addEventListener('input', renderStock);
       document.getElementById('installedSearch').addEventListener('input', renderInstalled);
@@ -1015,6 +1020,7 @@
       busy('swapBtn', true, '<i class="bi bi-save me-1"></i>บันทึกการสลับ');
       try {
         const payload = {
+          date: document.getElementById('swDate').value,
           location: document.getElementById('swLocation').value,
           newSN: document.getElementById('swNewSN').value,
           oldSN: document.getElementById('swOldSN').value,
@@ -1025,6 +1031,7 @@
         if (!document.getElementById('swNewStockWrap').classList.contains('d-none')) {
           payload.newModel = document.getElementById('swNewModel').value;
           payload.newLot = document.getElementById('swNewLot').value;
+          payload.newType = document.getElementById('swNewType').value;
         }
         const img = await readImageFile(document.getElementById('swImage'), 1280, 0.7);
         if (img) payload.imageFile = img;
@@ -1033,6 +1040,7 @@
         showToast(res.message, res.success);
         if (res.success) {
           document.getElementById('swapForm').reset();
+          document.getElementById('swDate').value = new Date().toISOString().split('T')[0]; // form.reset() ล้างวันที่ไปด้วย ตั้งกลับเป็นวันนี้ให้อัตโนมัติ
           showNewSNInfo(); // รีเซ็ตให้ซ่อนช่อง "เพิ่มเข้าคลัง" และเลิกบังคับกรอกรุ่นกลับไปเป็นค่าเริ่มต้น
           loadAll();
         }
