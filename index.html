@@ -983,10 +983,10 @@
       const body = document.getElementById('lotSummaryBody'), foot = document.getElementById('lotSummaryFoot');
       if (!rows.length) { body.innerHTML = '<tr><td colspan="7" class="empty">ยังไม่มีข้อมูลอุปกรณ์</td></tr>'; foot.innerHTML = ''; return; }
       const grand = rows.reduce((s, r) => s + r.total, 0) || 1;
-      let sN = 0, sC = 0, sO = 0, sI = 0;
+      let sN = 0, sC = 0, sO = 0, sI = 0, sT = 0;
       body.innerHTML = rows.map(r => {
         const cfg = (r.configCount || 0) + (r.readyCount || 0);
-        sN += r.newCount; sC += cfg; sO += r.pendingCount; sI += r.installedCount;
+        sN += r.newCount; sC += cfg; sO += r.pendingCount; sI += r.installedCount; sT += r.total;
         const share = Math.round(r.total / grand * 100);
         const label = r.lot === '-' ? '<span class="text-muted fst-italic">ไม่ระบุ Lot</span>' : `<span class="fw-semibold">${escapeHtml(r.lot)}</span>`;
         return `<tr class="lot-row" data-lot="${escapeHtml(r.lot)}">
@@ -1001,7 +1001,7 @@
           <small class="text-muted">${share}% ของทั้งหมด</small>
         </td></tr>`;
       }).join('');
-      foot.innerHTML = `<tr><td>รวมทุก Lot</td><td class="text-center text-success">${sN}</td><td class="text-center" style="color:#fd7e14">${sC}</td><td class="text-center text-warning">${sO}</td><td class="text-center text-primary">${sI}</td><td class="text-center">${sN + sC + sO + sI}</td><td></td></tr>`;
+      foot.innerHTML = `<tr><td>รวมทุก Lot</td><td class="text-center text-success">${sN}</td><td class="text-center" style="color:#fd7e14">${sC}</td><td class="text-center text-warning">${sO}</td><td class="text-center text-primary">${sI}</td><td class="text-center">${sT}</td><td></td></tr>`;
       body.querySelectorAll('.lot-row').forEach(row => {
         row.addEventListener('click', function () { filterByLot(this.getAttribute('data-lot')); });
       });
@@ -1210,9 +1210,10 @@
       updateSelCount();
     }
 
-    function updateSelCount() {
+        function updateSelCount() {
       document.getElementById('selCountText').textContent = issueSelected.size;
-      document.getElementById('selCountBtn').textContent = issueSelected.size;
+      const b = document.getElementById('selCountBtn'); // ปุ่มอาจอยู่ในสถานะ "รอสักครู่..." ซึ่งไม่มี span นี้
+      if (b) b.textContent = issueSelected.size;
     }
 
     function renderConfigList() {
@@ -1361,8 +1362,8 @@
       document.getElementById('modelName').value = model || '';
       document.getElementById('sn').value = sn || '';
       const statusSel = document.getElementById('status');
-      statusSel.value = status || ST_NEW;
-      if (!statusSel.value) statusSel.value = ST_NEW; // สถานะเก่าที่ไม่มีใน list เช่น "เก่า"
+            statusSel.value = isPendingReturnClient_(status) ? ST_PENDING : (status || ST_NEW); // "เก่า" (ข้อมูลเดิม) = รอส่งคืน
+      if (!statusSel.value) statusSel.value = ST_NEW;
       document.getElementById('lot').value = (lot === '-' ? '' : lot);
       document.getElementById('type').value = (type === '-' ? '' : type);
 
