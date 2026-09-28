@@ -597,19 +597,32 @@
     function escapeHtml(s) { return (s == null ? '' : s).toString().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
     function showToast(msg, ok) {
       const el = document.createElement('div');
-      el.className = 'toast align-items-center text-white border-0 show mb-2 shadow ' + (ok ? 'bg-success' : 'bg-danger');
+      const isWarn = ok && String(msg).indexOf('⚠') !== -1;
+      el.className = 'toast align-items-center border-0 show mb-2 shadow ' + (isWarn ? 'bg-warning text-dark' : (ok ? 'bg-success text-white' : 'bg-danger text-white'));
       el.innerHTML = '<div class="d-flex"><div class="toast-body">' + escapeHtml(msg) + '</div><button class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div>';
       document.getElementById('toastWrap').appendChild(el);
-      setTimeout(() => el.remove(), 4000);
+      setTimeout(() => el.remove(), isWarn ? 15000 : 4000);
     }
     function busy(btnId, on, label) {
       const b = document.getElementById(btnId); if (!b) return;
       b.disabled = on; b.innerHTML = on ? '<span class="spinner-border spinner-border-sm me-1"></span>รอสักครู่...' : label;
     }
 
+    /* เรียกจาก onerror ของรูปในตาราง — แทนที่ img ที่โหลดไม่ได้ด้วยไอคอนสำรอง แต่ยังคลิกเปิดลิงก์ตรงได้ */
+    function handleImgError(imgEl) {
+      const fallback = document.createElement('div');
+      fallback.className = 'd-flex align-items-center justify-content-center bg-light text-danger';
+      fallback.style.width = '40px';
+      fallback.style.height = '40px';
+      fallback.style.borderRadius = '6px';
+      fallback.title = 'โหลดรูปไม่ได้ ลองคลิกเพื่อเปิดลิงก์ตรง';
+      fallback.innerHTML = '<i class="bi bi-image-alt"></i>';
+      if (imgEl && imgEl.parentNode) imgEl.replaceWith(fallback);
+    }
+
     /* ย่อรูป + แปลงเป็นรูปแบบที่ Code.gs รับได้ {data, mimeType, name} */
     function readImageFile(input, maxW, quality) {
-      return new Promise(resolve => {
+      return new Promise((resolve, reject) => {
         const f = input && input.files && input.files[0];
         if (!f) return resolve(null);
         const fr = new FileReader();
@@ -624,9 +637,10 @@
             const url = c.toDataURL('image/jpeg', quality || 0.7);
             resolve({ data: url.split(',')[1], mimeType: 'image/jpeg', name: (f.name || 'img') + '.jpg' });
           };
-          img.onerror = () => resolve(null);
+          img.onerror = () => reject(new Error('อ่านไฟล์รูป "' + (f.name || '') + '" ไม่ได้ (ไฟล์ HEIC จาก iPhone เบราว์เซอร์บางตัวเปิดไม่ได้ ลองเลือกเป็น JPG/PNG)'));
           img.src = fr.result;
         };
+        fr.onerror = () => reject(new Error('อ่านไฟล์รูปไม่สำเร็จ'));
         fr.readAsDataURL(f);
       });
     }
@@ -778,7 +792,7 @@
         const statusClass = it.status === 'ใหม่' ? 'bg-success' : (it.status === 'ส่งคืนแล้ว' ? 'bg-secondary' : 'bg-warning text-dark');
         const statusLabel = isPending ? 'รอส่งคืน' : (it.status || 'ไม่ระบุ');
         const thumb = it.image
-          ? `<a href="${escapeHtml(it.image)}" target="_blank" rel="noopener"><img src="${escapeHtml(it.image)}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;" alt="รูปอุปกรณ์"></a>`
+          ? `<a href="${escapeHtml(it.image)}" target="_blank" rel="noopener" title="เปิดรูปเต็ม"><img src="${escapeHtml(it.image)}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;" alt="รูปอุปกรณ์" onerror="handleImgError(this)"></a>`
           : `<div class="d-flex align-items-center justify-content-center bg-light text-muted" style="width:40px;height:40px;border-radius:6px;"><i class="bi bi-image"></i></div>`;
         const returnBtn = isPending
           ? `<button class="btn btn-outline-success" data-sn="${escapeHtml(it.sn)}" onclick="markReturned(this.dataset.sn)" title="ยืนยันว่าส่งคืนแล้ว"><i class="bi bi-check2-circle"></i></button>`
@@ -828,7 +842,7 @@
 
       box.innerHTML = list.slice(start, start + PAGE_SIZE).map(it => {
         const thumb = it.imageUrl
-          ? `<a href="${escapeHtml(it.imageUrl)}" target="_blank" rel="noopener"><img src="${escapeHtml(it.imageUrl)}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;" alt="รูปอุปกรณ์"></a>`
+          ? `<a href="${escapeHtml(it.imageUrl)}" target="_blank" rel="noopener" title="เปิดรูปเต็ม"><img src="${escapeHtml(it.imageUrl)}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;" alt="รูปอุปกรณ์" onerror="handleImgError(this)"></a>`
           : `<div class="d-flex align-items-center justify-content-center bg-light text-muted" style="width:40px;height:40px;border-radius:6px;"><i class="bi bi-image"></i></div>`;
         return `<tr>
           <td>${thumb}</td>
