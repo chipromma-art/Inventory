@@ -708,6 +708,29 @@
     </div>
   </div>
 
+  <!-- โมดัลยืนยันส่งคืนอุปกรณ์ -->
+  <div class="modal fade" id="returnModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header bg-light">
+          <h5 class="modal-title"><i class="bi bi-check2-circle text-success me-1"></i>ยืนยันส่งคืนอุปกรณ์</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3 text-muted small">SN: <span id="returnModalSN" class="fw-semibold text-dark"></span></div>
+          <label class="form-label">วันที่ส่งคืน</label>
+          <input type="date" class="form-control" id="returnDate">
+          <div class="form-text">เว้นว่าง = ใช้วันที่ปัจจุบัน</div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">ยกเลิก</button>
+          <button type="button" class="btn btn-success" id="btnConfirmReturn"><i
+              class="bi bi-check2-circle me-1"></i>ยืนยันส่งคืน</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- โมดัลยืนยันรหัสผ่าน -->
   <div class="modal fade" id="passwordModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered modal-sm">
@@ -798,6 +821,7 @@
       document.getElementById('btnSelAll').addEventListener('click', () => toggleAllAvailable(true));
       document.getElementById('btnSelNone').addEventListener('click', () => toggleAllAvailable(false));
       document.getElementById('btnIssue').addEventListener('click', submitIssue);
+      document.getElementById('btnConfirmReturn').addEventListener('click', confirmReturn);
 
       loadAll();
     });
@@ -1068,11 +1092,14 @@
         const issuedInfo = isIssuedOutClient_(it.status) && it.issuedBy
           ? `<div class="text-muted small mt-1"><i class="bi bi-person me-1"></i>${escapeHtml(it.issuedBy)}${it.issuedDate ? ' · ' + escapeHtml(it.issuedDate) : ''}</div>`
           : '';
+        const returnedInfo = it.status === ST_RETURNED && it.returnedDate
+          ? `<div class="text-muted small mt-1"><i class="bi bi-calendar-check me-1"></i>${escapeHtml(it.returnedDate)}</div>`
+          : '';
         return `<tr>
           <td>${thumb}</td>
           <td><div class="fw-semibold">${escapeHtml(it.model)}</div><div class="text-muted small"><i class="bi bi-upc-scan me-1"></i>${escapeHtml(it.sn)}</div></td>
           <td>${it.type && it.type !== '-' ? escapeHtml(it.type) : '<span class="text-muted">-</span>'}</td>
-          <td>${statusBadgeHtml(it.status)}${issuedInfo}</td>
+          <td>${statusBadgeHtml(it.status)}${issuedInfo}${returnedInfo}</td>
           <td><span class="badge lot-badge bg-secondary-subtle text-secondary-emphasis">${escapeHtml(it.lot || '-')}</span></td>
           <td class="text-end"><div class="btn-group btn-group-sm">
             ${returnBtn}${configBtn}${cancelBtn}
@@ -1324,15 +1351,30 @@
     }
 
     /* ================= จัดการคลัง / ติดตั้ง ================= */
+    let returnModal;
+    let returnTargetSN = '';
+
     async function markReturned(sn) {
       if (!(await verifyAdminPassword())) return;
-      if (!confirm('ยืนยันว่าส่งคืนอุปกรณ์ SN: ' + sn + ' เรียบร้อยแล้ว?')) return;
+      returnTargetSN = sn;
+      document.getElementById('returnModalSN').textContent = sn;
+      document.getElementById('returnDate').value = new Date().toISOString().split('T')[0];
+      if (!returnModal) returnModal = new bootstrap.Modal(document.getElementById('returnModal'));
+      returnModal.show();
+    }
+
+    async function confirmReturn() {
+      const sn = returnTargetSN;
+      const date = document.getElementById('returnDate').value;
+      busy('btnConfirmReturn', true, '<i class="bi bi-check2-circle me-1"></i>ยืนยันส่งคืน');
       try {
-        const res = await callAPI('markReturned', { sn });
+        const res = await callAPI('markReturned', { sn, date });
         showToast(res.message, res.success);
-        if (res.success) loadAll();
+        if (res.success) { returnModal.hide(); loadAll(); }
       } catch (err) {
         showToast('บันทึกไม่สำเร็จ: ' + err.message, false);
+      } finally {
+        busy('btnConfirmReturn', false, '<i class="bi bi-check2-circle me-1"></i>ยืนยันส่งคืน');
       }
     }
 
